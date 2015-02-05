@@ -6,6 +6,7 @@ import java.util.List;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockAir;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -20,8 +21,8 @@ public class Kyzray {
 	private int radius;
 	private LinkedList<XrayBlock> blockList;
 	private boolean displayArea;
-	private int minX, minZ, maxX, maxZ;
-	
+	private int minX, minZ, maxX, maxZ, maxY;
+
 	ChatStyle style;
 	ChatComponentText displayMessage;
 
@@ -30,7 +31,7 @@ public class Kyzray {
 		this.blockToFind = null;
 		this.radius = 32;
 		this.displayArea = false;
-		
+
 		this.style = new ChatStyle();
 		this.style.setColor(EnumChatFormatting.AQUA);
 	}
@@ -44,17 +45,23 @@ public class Kyzray {
 			return;
 		Tessellator tess = Tessellator.instance;
 		int color = this.blockToFind.getMapColor(0).colorValue;
+		int totalBlocks = 0;
 		for (XrayBlock block: blockList)
 		{
 			block.drawBlock(tess, color);
+			totalBlocks++;
+			if (totalBlocks > 20000)
+				return;
 		}
 	}
-	
+
 	/**
 	 * Draws a box around the area that had been searched in
 	 */
 	public void drawArea()
 	{
+		if (this.blockToFind == null)
+			return;
 		Tessellator tess = Tessellator.instance;
 		GL11.glLineWidth(5.0f);
 		tess.startDrawing(GL11.GL_LINE_LOOP);
@@ -64,28 +71,28 @@ public class Kyzray {
 		tess.addVertex(this.maxX, 0, this.maxZ);
 		tess.addVertex(this.minX, 0, this.maxZ);
 		tess.draw();
-		
+
 		tess.startDrawing(GL11.GL_LINE_LOOP);
 		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.addVertex(this.minX, 255, this.minZ);
-		tess.addVertex(this.maxX, 255, this.minZ);
-		tess.addVertex(this.maxX, 255, this.maxZ);
-		tess.addVertex(this.minX, 255, this.maxZ);
+		tess.addVertex(this.minX, this.maxY, this.minZ);
+		tess.addVertex(this.maxX, this.maxY, this.minZ);
+		tess.addVertex(this.maxX, this.maxY, this.maxZ);
+		tess.addVertex(this.minX, this.maxY, this.maxZ);
 		tess.draw();
-		
+
 		tess.startDrawing(GL11.GL_LINES);
 		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
 		tess.addVertex(this.minX, 0, this.minZ);
-		tess.addVertex(this.minX, 255, this.minZ);
+		tess.addVertex(this.minX, this.maxY, this.minZ);
 
 		tess.addVertex(this.maxX, 0, this.minZ);
-		tess.addVertex(this.maxX, 255, this.minZ);
+		tess.addVertex(this.maxX, this.maxY, this.minZ);
 
 		tess.addVertex(this.maxX, 0, this.maxZ);
-		tess.addVertex(this.maxX, 255, this.maxZ);
+		tess.addVertex(this.maxX, this.maxY, this.maxZ);
 
 		tess.addVertex(this.minX, 0, this.maxZ);
-		tess.addVertex(this.minX, 255, this.maxZ);
+		tess.addVertex(this.minX, this.maxY, this.maxZ);
 		tess.draw();
 	}
 
@@ -95,6 +102,7 @@ public class Kyzray {
 	 */
 	private LinkedList<XrayBlock> getBlockList()
 	{
+		this.logMessage("Seeing through the world...");
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
 		WorldClient world = Minecraft.getMinecraft().theWorld;
 		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
@@ -102,10 +110,12 @@ public class Kyzray {
 		this.maxX = (int) (player.posX + this.radius);		
 		this.minZ = (int) (player.posZ - this.radius);
 		this.maxZ = (int) (player.posZ + this.radius);
-		
+		this.maxY = 255;
+		if (Block.isEqualTo(this.blockToFind, Block.getBlockById(0)))
+			this.maxY = 63;
 		for (int x = this.minX; x < this.maxX; x++)
 		{
-			for (int y = 0; y < 256; y++)
+			for (int y = 0; y < this.maxY; y++)
 			{
 				for (int z = this.minZ; z < this.maxZ; z++)
 				{
@@ -117,8 +127,19 @@ public class Kyzray {
 				}
 			}
 		}
-		this.logMessage("Found " + toReturn.size() + " of " + this.blockToFind.getLocalizedName()
-				+ " in " + this.radius + " block radius.");
+		if (Block.isEqualTo(this.blockToFind, Block.getBlockById(0))) // if air
+		{
+			this.logMessage("Found " + toReturn.size() + " air blocks in " + this.radius
+					+ " block radius from bedrock to sea level. Cuz I assume you're not xraying the sky.");
+		}
+		else
+			this.logMessage("Found " + toReturn.size() + " of " + this.blockToFind.getLocalizedName()
+					+ " in " + this.radius + " block radius bedrock to sky.");
+		if (toReturn.size() > 20000)
+		{
+			this.logMessage("Too many blocks! Displaying more will lag.");
+			this.logMessage("Displayed 20,000 blocks out of " + toReturn.size() + ".");
+		}
 		return toReturn;
 	}
 
@@ -129,20 +150,23 @@ public class Kyzray {
 	 */
 	public String setToFind(String blockToFind)
 	{
+		blockToFind = blockToFind.toLowerCase();
+		if (blockToFind.equals("sign"))
+			blockToFind = "wall_sign";
 		if (Block.blockRegistry.containsKey(blockToFind))
 		{
 			this.blockToFind = (Block)Block.blockRegistry.getObject(blockToFind);
-			this.blockList = this.getBlockList();
-			return "Now xraying for block " + blockToFind + " aka " + this.blockToFind.getLocalizedName();
+			//			this.blockList = this.getBlockList();
+			return "Now xraying for block \"" + blockToFind + "\" aka " + this.blockToFind.getLocalizedName();
 		}
 		else if (blockToFind.matches("[0-9]+")
 				&& Block.blockRegistry.containsID(Integer.parseInt(blockToFind)))
 		{
 			this.blockToFind = (Block)Block.blockRegistry.getObjectForID(Integer.parseInt(blockToFind));
-			this.blockList = this.getBlockList();
-			return "Now xraying for block ID " + blockToFind + " aka " + this.blockToFind.getLocalizedName();
+			//			this.blockList = this.getBlockList();
+			return "Now xraying for block ID \"" + blockToFind + "\" aka " + this.blockToFind.getLocalizedName();
 		}
-		return "No such block ID/name as " + blockToFind;
+		return "No such block ID/name as \"" + blockToFind + "\"";
 	}
 
 	/**
@@ -166,10 +190,9 @@ public class Kyzray {
 		if (theRadius > 64)
 			return theRadius + " is too large! Maximum allowed radius is 64.";
 		this.radius = theRadius;
-		this.reload();
 		return "Xray radius set to " + theRadius;
 	}
-	
+
 	/**
 	 * Sets whether area display is on or not
 	 * @param isOn If area display is on
@@ -190,7 +213,7 @@ public class Kyzray {
 	 * @return radius being xrayed in
 	 */
 	public int getRadius() { return this.radius; }
-	
+
 	/**
 	 * Helper to log a message to the user
 	 * @param message Message to be logged
@@ -201,6 +224,6 @@ public class Kyzray {
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
-	
+
 	public boolean getAreaDisplay() { return this.displayArea; }
 }

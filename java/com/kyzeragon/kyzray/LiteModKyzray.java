@@ -164,7 +164,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 					String[] commands = {"<on> - Turn on xraying. Duh.", 
 							"<off> - Turn off xraying.",
 							"<reload|update> - Displays new xray area.",
-							"<radius|r> [radius] - Displays current radius or sets new radius.",
+							"<radius|r> [radius] - Displays radius or sets new radius.",
 							"<help> - This help message. Hurrdurr.",
 							"<area> [on|off] - Toggle/on/off the display for xray area"};
 					this.logMessage("Kyzray [v" + this.getVersion() + "] commands");
@@ -174,7 +174,12 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 					}
 				}
 				else // set the block to xray for
-					this.logMessage(this.kyzray.setToFind(tokens[1]));
+				{
+					String result = this.kyzray.setToFind(tokens[1]);
+					this.logMessage(result);
+					if (result.matches("Now xraying for.*"))
+						this.kyzray.reload();
+				}
 			}
 			else // display version and help command
 			{
