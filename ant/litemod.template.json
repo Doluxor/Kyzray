@@ -1,0 +1,7 @@
+{
+    "name": "${ant.project.name}",
+    "mcversion": "${litemodversion}",
+    "revision": "${build.number}",
+    "author": "${author}",
+    "description": "An xray/block finder mod cuz I don't like other people's."
+}
