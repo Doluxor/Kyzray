@@ -43,6 +43,8 @@ public class Kyzray {
 	{
 		if (this.blockToFind == null)
 			return;
+		if (this.blockList == null)
+			return;
 		Tessellator tess = Tessellator.instance;
 		int color = this.blockToFind.getMapColor(0).colorValue;
 		int totalBlocks = 0;
