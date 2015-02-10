@@ -9,15 +9,17 @@ public class XrayBlock {
 	private int x;
 	private int y;
 	private int z;
+	private int color;
 	
-	public XrayBlock(int x, int y, int z)
+	public XrayBlock(int x, int y, int z, int color)
 	{
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.color = color;
 	}
 	
-	public void drawBlock(Tessellator tess, int color)
+	public void drawBlock(Tessellator tess)
 	{
 		GL11.glLineWidth(3.0f);
 		tess.startDrawing(GL11.GL_LINE_LOOP);

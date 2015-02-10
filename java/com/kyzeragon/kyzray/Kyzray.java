@@ -17,7 +17,7 @@ import net.minecraft.util.EnumChatFormatting;
 
 public class Kyzray {
 
-	private Block blockToFind;
+	private LinkedList<Block> blocksToFind;
 	private int radius;
 	private LinkedList<XrayBlock> blockList;
 	private boolean displayArea;
@@ -28,7 +28,7 @@ public class Kyzray {
 
 	public Kyzray()
 	{
-		this.blockToFind = null;
+		this.blocksToFind = new LinkedList<Block>();
 		this.radius = 32;
 		this.displayArea = false;
 
@@ -41,18 +41,17 @@ public class Kyzray {
 	 */
 	public void drawXray()
 	{
-		if (this.blockToFind == null)
+		if (this.blocksToFind.size() == 0)
 			return;
 		if (this.blockList == null)
 			return;
 		Tessellator tess = Tessellator.instance;
-		int color = this.blockToFind.getMapColor(0).colorValue;
 		int totalBlocks = 0;
 		for (XrayBlock block: blockList)
 		{
-			block.drawBlock(tess, color);
+			block.drawBlock(tess);
 			totalBlocks++;
-			if (totalBlocks > 20000)
+			if (totalBlocks > 15000)
 				return;
 		}
 	}
@@ -62,7 +61,7 @@ public class Kyzray {
 	 */
 	public void drawArea()
 	{
-		if (this.blockToFind == null)
+		if (this.blocksToFind.size() == 0)
 			return;
 		Tessellator tess = Tessellator.instance;
 		GL11.glLineWidth(5.0f);
@@ -104,7 +103,7 @@ public class Kyzray {
 	 */
 	private LinkedList<XrayBlock> getBlockList()
 	{
-		this.logMessage("Seeing through the world...");
+//		this.logMessage("Seeing through the world...");
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
 		WorldClient world = Minecraft.getMinecraft().theWorld;
 		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
@@ -113,34 +112,59 @@ public class Kyzray {
 		this.minZ = (int) (player.posZ - this.radius);
 		this.maxZ = (int) (player.posZ + this.radius);
 		this.maxY = 255;
-		if (Block.isEqualTo(this.blockToFind, Block.getBlockById(0)))
-			this.maxY = 63;
+		int[] blockCounts = new int[this.blocksToFind.size()];
+		for (int i = 0; i < this.blocksToFind.size(); i++)
+			blockCounts[i] = 0;
+
+		if (this.blocksToFind.contains(Block.getBlockById(0)))
+		{
+			if (this.blocksToFind.size() == 1)
+				this.maxY = 63;
+			else
+			{
+				this.logMessage("Omitting air from multi-block xray search. Xray for air alone to find underground structures.",
+						EnumChatFormatting.RED);
+				this.blocksToFind.remove(Block.getBlockById(0));
+			}
+		}
 		for (int x = this.minX; x < this.maxX; x++)
 		{
 			for (int y = 0; y < this.maxY; y++)
 			{
 				for (int z = this.minZ; z < this.maxZ; z++)
 				{
-					Block currentBlock = world.getBlock(x, y, z);
-					if (currentBlock.getLocalizedName().equals(this.blockToFind.getLocalizedName()))
+					for (int i = 0; i < this.blocksToFind.size(); i++)
 					{
-						toReturn.add(new XrayBlock(x, y, z));
+						Block currentBlock = world.getBlock(x, y, z);
+						if (currentBlock.getLocalizedName().equals(this.blocksToFind.get(i).getLocalizedName()))
+						{
+							toReturn.add(new XrayBlock(x, y, z, currentBlock.getMapColor(0).colorValue));
+							blockCounts[i]++;
+						}
 					}
 				}
 			}
 		}
-		if (Block.isEqualTo(this.blockToFind, Block.getBlockById(0))) // if air
+		if (this.blocksToFind.size() == 1
+				&& Block.isEqualTo(this.blocksToFind.get(0), Block.getBlockById(0))) // if air
 		{
 			this.logMessage("Found " + toReturn.size() + " air blocks in " + this.radius
 					+ " block radius from bedrock to sea level. Cuz I assume you're not xraying the sky.");
 		}
 		else
-			this.logMessage("Found " + toReturn.size() + " of " + this.blockToFind.getLocalizedName()
-					+ " in " + this.radius + " block radius bedrock to sky.");
-		if (toReturn.size() > 20000)
 		{
-			this.logMessage("Too many blocks! Displaying more will lag.");
-			this.logMessage("Displayed 20,000 blocks out of " + toReturn.size() + ".");
+			String message = "Found";
+			for (int i = 0; i < this.blocksToFind.size(); i++)
+				message += " " + blockCounts[i] + " " + this.blocksToFind.get(i).getLocalizedName() + ",";
+			this.logMessage(message.substring(0, message.length() - 1) 
+					+ " in " + this.radius + " block radius from bedrock to sky.");
+			//			this.logMessage("Found " + toReturn.size() + " of " + this.blockToFind.getLocalizedName()
+			//					+ " in " + this.radius + " block radius bedrock to sky.");
+		}
+		if (toReturn.size() > 15000)
+		{
+			this.logMessage("Too many blocks! Displaying more will lag.", EnumChatFormatting.RED);
+			this.logMessage("Displayed 15,000 blocks out of " + toReturn.size() + ".", EnumChatFormatting.RED);
 		}
 		return toReturn;
 	}
@@ -150,25 +174,37 @@ public class Kyzray {
 	 * @param blockToFind The block to attempt to xray for
 	 * @return The message to display to the user depending on if successfully set
 	 */
-	public String setToFind(String blockToFind)
+	public String setToFind(String blockString)
 	{
-		blockToFind = blockToFind.toLowerCase();
-		if (blockToFind.equals("sign"))
-			blockToFind = "wall_sign";
-		if (Block.blockRegistry.containsKey(blockToFind))
+		this.blocksToFind.clear();
+		blockString = blockString.toLowerCase();
+		String[] blocks = blockString.split(",");
+		String toReturn = "Now xraying for blocks:";
+		for (String findBlock: blocks)
 		{
-			this.blockToFind = (Block)Block.blockRegistry.getObject(blockToFind);
-			//			this.blockList = this.getBlockList();
-			return "Now xraying for block \"" + blockToFind + "\" aka " + this.blockToFind.getLocalizedName();
+			if (findBlock.equals("sign"))
+				findBlock = "wall_sign";
+			if (Block.blockRegistry.containsKey(findBlock))
+			{
+				if (!this.blocksToFind.contains((Block)Block.blockRegistry.getObject(findBlock)))
+				{
+					this.blocksToFind.add((Block)Block.blockRegistry.getObject(findBlock));
+					toReturn += " " + this.blocksToFind.getLast().getLocalizedName();
+				}
+			}
+			else if (findBlock.matches("[0-9]+")
+					&& Block.blockRegistry.containsID(Integer.parseInt(findBlock)))
+			{
+				if (!this.blocksToFind.contains((Block)Block.blockRegistry.getObjectForID(Integer.parseInt(findBlock))))
+				{
+					this.blocksToFind.add((Block)Block.blockRegistry.getObjectForID(Integer.parseInt(findBlock)));
+					toReturn += " " + this.blocksToFind.getLast().getLocalizedName();
+				}
+			}
+			else
+				return "No such block ID/name as \"" + findBlock + "\"";
 		}
-		else if (blockToFind.matches("[0-9]+")
-				&& Block.blockRegistry.containsID(Integer.parseInt(blockToFind)))
-		{
-			this.blockToFind = (Block)Block.blockRegistry.getObjectForID(Integer.parseInt(blockToFind));
-			//			this.blockList = this.getBlockList();
-			return "Now xraying for block ID \"" + blockToFind + "\" aka " + this.blockToFind.getLocalizedName();
-		}
-		return "No such block ID/name as \"" + blockToFind + "\"";
+		return toReturn;
 	}
 
 	/**
@@ -176,7 +212,7 @@ public class Kyzray {
 	 */
 	public void reload()
 	{
-		if (this.blockToFind != null)
+		if (this.blocksToFind.size() > 0)
 			this.blockList = this.getBlockList();
 	}
 
@@ -208,7 +244,7 @@ public class Kyzray {
 	 * Getter for the block to find
 	 * @return name of the block being xrayed for
 	 */
-	public String getToFind() { return this.blockToFind.getLocalizedName(); }
+	//	public String getToFind() { return this.blockToFind.getLocalizedName(); }
 
 	/**
 	 * Getter for the radius to look in
@@ -222,6 +258,20 @@ public class Kyzray {
 	 */
 	private void logMessage(String message)
 	{
+		this.style.setColor(EnumChatFormatting.AQUA);
+		this.displayMessage = new ChatComponentText(message);
+		this.displayMessage.setChatStyle(style);
+		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
+	}
+
+	/**
+	 * Overload helper to log message to user with specified color
+	 * @param message Message to be logged
+	 * @param color Color the message will be displayed
+	 */
+	private void logMessage(String message, EnumChatFormatting color)
+	{
+		this.style.setColor(color);
 		this.displayMessage = new ChatComponentText(message);
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);

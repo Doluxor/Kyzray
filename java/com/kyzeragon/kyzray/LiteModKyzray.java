@@ -31,7 +31,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "0.9.0"; }
+	public String getVersion() { return "0.9.1"; }
 
 	@Override
 	public void init(File configPath) 
@@ -156,25 +156,29 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 							this.logMessage("Area display: OFF");
 						}
 						else
-							this.logMessage("Your parameter makes no sense. Fix pl0x.");
+							this.logMessage("Your parameter makes no sense. Fix pl0x.", EnumChatFormatting.RED);
 					}
 				}
 				else if (tokens[1].equalsIgnoreCase("help"))
 				{
 					String[] commands = {"<on> - Turn on xraying. Duh.", 
 							"<off> - Turn off xraying.",
+							"<block[,block]> - Blocks to xray for, separated by commas.",
 							"<reload|update> - Displays new xray area.",
 							"<radius|r> [radius] - Displays radius or sets new radius.",
 							"<help> - This help message. Hurrdurr.",
-							"<area> [on|off] - Toggle/on/off the display for xray area"};
+							"<area> [on|off] - Toggle/on/off the display for xray area."};
 					this.logMessage("Kyzray [v" + this.getVersion() + "] commands");
 					for (String command: commands)
-					{
 						this.logMessage("/kr " + command);
-					}
 				}
 				else // set the block to xray for
 				{
+					if (tokens.length > 2)
+					{
+						this.logMessage("Too many args! Separate blocks with commas. Ex: hopper,sign");
+						return;
+					}
 					String result = this.kyzray.setToFind(tokens[1]);
 					this.logMessage(result);
 					if (result.matches("Now xraying for.*"))
@@ -195,6 +199,19 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 	 */
 	private void logMessage(String message)
 	{
+		this.displayMessage = new ChatComponentText(message);
+		this.displayMessage.setChatStyle(style);
+		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
+	}
+	
+	/**
+	 * Overload helper to log message to user with specified color
+	 * @param message Message to be logged
+	 * @param color Color the message will be displayed
+	 */
+	private void logMessage(String message, EnumChatFormatting color)
+	{
+		this.style.setColor(color);
 		this.displayMessage = new ChatComponentText(message);
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
