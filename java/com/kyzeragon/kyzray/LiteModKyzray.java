@@ -11,18 +11,22 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.play.client.C01PacketChatMessage;
+import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 
+import com.mumfrey.liteloader.ChatFilter;
 import com.mumfrey.liteloader.OutboundChatListener;
 import com.mumfrey.liteloader.PostRenderListener;
 import com.mumfrey.liteloader.Tickable;
 
-public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
+public class LiteModKyzray implements PostRenderListener, OutboundChatListener, ChatFilter {
 
 	private boolean xrayOn;
 	private Kyzray kyzray;
+	private boolean sentCmd;
 	
 	ChatStyle style;
 	ChatComponentText displayMessage;
@@ -38,6 +42,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 	{
 		this.xrayOn = false;
 		this.kyzray = new Kyzray();
+		this.sentCmd = false;
 		
 		this.style = new ChatStyle();
 		this.style.setColor(EnumChatFormatting.AQUA);
@@ -107,6 +112,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 		String[] tokens = message.split(" ");
 		if (tokens.length > 0 && tokens[0].equalsIgnoreCase("/kr"))
 		{
+			this.sentCmd = true;
 			if (tokens.length > 1)
 			{
 				if (tokens[1].equalsIgnoreCase("on"))
@@ -131,9 +137,9 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 					else
 					{
 						if (!tokens[2].matches("[0-9]+"))
-							this.logMessage("\"" + tokens[2] + "\" is not a valid integer!");
+							this.logError("\"" + tokens[2] + "\" is not a valid integer!");
 						else
-							this.logMessage(this.kyzray.setRadius(Integer.parseInt(tokens[2])));
+							this.kyzray.setRadius(Integer.parseInt(tokens[2]));
 					}
 				}
 				else if (tokens[1].equalsIgnoreCase("area"))
@@ -156,18 +162,18 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 							this.logMessage("Area display: OFF");
 						}
 						else
-							this.logMessage("Your parameter makes no sense. Fix pl0x.", EnumChatFormatting.RED);
+							this.logError("Usage: /kr area [on|off]");
 					}
 				}
 				else if (tokens[1].equalsIgnoreCase("help"))
 				{
-					String[] commands = {"<on> - Turn on xraying. Duh.", 
-							"<off> - Turn off xraying.",
-							"<block[,block]> - Blocks to xray for, separated by commas.",
-							"<reload|update> - Displays new xray area.",
-							"<radius|r> [radius] - Displays radius or sets new radius.",
-							"<help> - This help message. Hurrdurr.",
-							"<area> [on|off] - Toggle/on/off the display for xray area."};
+					String[] commands = {"on - Turn on xraying. Duh.", 
+							"off - Turn off xraying.",
+							"block[,block] - Blocks to xray for, separated by commas.",
+							"reload|update - Displays new xray area.",
+							"radius|r [radius] - Displays radius or sets new radius.",
+							"help - This help message. Hurrdurr.",
+							"area [on|off] - Toggle/on/off the display for xray area."};
 					this.logMessage("Kyzray [v" + this.getVersion() + "] commands");
 					for (String command: commands)
 						this.logMessage("/kr " + command);
@@ -193,27 +199,40 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener {
 		}
 	}
 	
+	@Override
+	public boolean onChat(S02PacketChat chatPacket, IChatComponent chat,
+			String message) {
+		if (message.matches(".*nknown.*ommand.*") && this.sentCmd)
+		{
+			this.sentCmd = false;
+			return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * Helper to log a message to the user
 	 * @param message Message to be logged
 	 */
 	private void logMessage(String message)
 	{
+		this.style.setColor(EnumChatFormatting.AQUA);
 		this.displayMessage = new ChatComponentText(message);
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
 	
 	/**
-	 * Overload helper to log message to user with specified color
+	 * Helper to log error to user in red text
 	 * @param message Message to be logged
-	 * @param color Color the message will be displayed
 	 */
-	private void logMessage(String message, EnumChatFormatting color)
+	private void logError(String message)
 	{
-		this.style.setColor(color);
+		this.style.setColor(EnumChatFormatting.RED);
 		this.displayMessage = new ChatComponentText(message);
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
+
+	
 }

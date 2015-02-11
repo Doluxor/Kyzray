@@ -33,7 +33,6 @@ public class Kyzray {
 		this.displayArea = false;
 
 		this.style = new ChatStyle();
-		this.style.setColor(EnumChatFormatting.AQUA);
 	}
 
 	/**
@@ -103,7 +102,7 @@ public class Kyzray {
 	 */
 	private LinkedList<XrayBlock> getBlockList()
 	{
-//		this.logMessage("Seeing through the world...");
+		//		this.logMessage("Seeing through the world...");
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
 		WorldClient world = Minecraft.getMinecraft().theWorld;
 		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
@@ -122,8 +121,7 @@ public class Kyzray {
 				this.maxY = 63;
 			else
 			{
-				this.logMessage("Omitting air from multi-block xray search. Xray for air alone to find underground structures.",
-						EnumChatFormatting.RED);
+				this.logError("Omitting air from multi-block xray search. Xray for air alone to find underground structures.");
 				this.blocksToFind.remove(Block.getBlockById(0));
 			}
 		}
@@ -158,13 +156,11 @@ public class Kyzray {
 				message += " " + blockCounts[i] + " " + this.blocksToFind.get(i).getLocalizedName() + ",";
 			this.logMessage(message.substring(0, message.length() - 1) 
 					+ " in " + this.radius + " block radius from bedrock to sky.");
-			//			this.logMessage("Found " + toReturn.size() + " of " + this.blockToFind.getLocalizedName()
-			//					+ " in " + this.radius + " block radius bedrock to sky.");
 		}
 		if (toReturn.size() > 15000)
 		{
-			this.logMessage("Too many blocks! Displaying more will lag.", EnumChatFormatting.RED);
-			this.logMessage("Displayed 15,000 blocks out of " + toReturn.size() + ".", EnumChatFormatting.RED);
+			this.logError("Too many blocks! Displaying more will lag.");
+			this.logError("Displayed 15,000 blocks out of " + toReturn.size() + ".");
 		}
 		return toReturn;
 	}
@@ -221,14 +217,17 @@ public class Kyzray {
 	 * @param theRadius The radius to xray in
 	 * @return The error/success message to display to the user
 	 */
-	public String setRadius(int theRadius) 
+	public void setRadius(int theRadius) 
 	{ 
 		if (theRadius < 1)
-			return "You can't have a radius that small, uDerp.";
-		if (theRadius > 64)
-			return theRadius + " is too large! Maximum allowed radius is 64.";
-		this.radius = theRadius;
-		return "Xray radius set to " + theRadius;
+			this.logError("You can't have a radius that small, uDerp.");
+		else if (theRadius > 64)
+			this.logError(theRadius + " is too large! Maximum allowed radius is 64.");
+		else
+		{
+			this.radius = theRadius;
+			this.logMessage("Xray radius set to " + theRadius);
+		}
 	}
 
 	/**
@@ -265,13 +264,12 @@ public class Kyzray {
 	}
 
 	/**
-	 * Overload helper to log message to user with specified color
+	 * Helper to log error to user in red text
 	 * @param message Message to be logged
-	 * @param color Color the message will be displayed
 	 */
-	private void logMessage(String message, EnumChatFormatting color)
+	private void logError(String message)
 	{
-		this.style.setColor(color);
+		this.style.setColor(EnumChatFormatting.RED);
 		this.displayMessage = new ChatComponentText(message);
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
