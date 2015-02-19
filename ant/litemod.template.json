@@ -3,5 +3,5 @@
     "mcversion": "${litemodversion}",
     "revision": "${build.number}",
     "author": "${author}",
-    "description": "An xray/block finder mod cuz I don't like other people's."
+    "description": "An xray/block finder mod controlled by chat commands."
 }

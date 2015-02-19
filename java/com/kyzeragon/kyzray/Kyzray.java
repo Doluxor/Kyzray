@@ -7,13 +7,16 @@ import org.lwjgl.opengl.GL11;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
+import net.minecraft.block.BlockChest;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.Vec3;
 
 public class Kyzray {
 
@@ -21,7 +24,7 @@ public class Kyzray {
 	private int radius;
 	private LinkedList<XrayBlock> blockList;
 	private boolean displayArea;
-	private int minX, minZ, maxX, maxZ, maxY;
+	private int minX, minZ, maxX, maxZ, minY, maxY;
 
 	ChatStyle style;
 	ChatComponentText displayMessage;
@@ -51,7 +54,11 @@ public class Kyzray {
 			block.drawBlock(tess);
 			totalBlocks++;
 			if (totalBlocks > 15000)
+			{
+				this.logError("Too many blocks! Displaying more will lag.");
+				this.logError("Displayed 15,000 blocks out of " + this.blockList.size() + ".");
 				return;
+			}
 		}
 	}
 
@@ -66,10 +73,10 @@ public class Kyzray {
 		GL11.glLineWidth(5.0f);
 		tess.startDrawing(GL11.GL_LINE_LOOP);
 		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.addVertex(this.minX, 0, this.minZ);
-		tess.addVertex(this.maxX, 0, this.minZ);
-		tess.addVertex(this.maxX, 0, this.maxZ);
-		tess.addVertex(this.minX, 0, this.maxZ);
+		tess.addVertex(this.minX, this.minY, this.minZ);
+		tess.addVertex(this.maxX, this.minY, this.minZ);
+		tess.addVertex(this.maxX, this.minY, this.maxZ);
+		tess.addVertex(this.minX, this.minY, this.maxZ);
 		tess.draw();
 
 		tess.startDrawing(GL11.GL_LINE_LOOP);
@@ -82,16 +89,16 @@ public class Kyzray {
 
 		tess.startDrawing(GL11.GL_LINES);
 		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.addVertex(this.minX, 0, this.minZ);
+		tess.addVertex(this.minX, this.minY, this.minZ);
 		tess.addVertex(this.minX, this.maxY, this.minZ);
 
-		tess.addVertex(this.maxX, 0, this.minZ);
+		tess.addVertex(this.maxX, this.minY, this.minZ);
 		tess.addVertex(this.maxX, this.maxY, this.minZ);
 
-		tess.addVertex(this.maxX, 0, this.maxZ);
+		tess.addVertex(this.maxX, this.minY, this.maxZ);
 		tess.addVertex(this.maxX, this.maxY, this.maxZ);
 
-		tess.addVertex(this.minX, 0, this.maxZ);
+		tess.addVertex(this.minX, this.minY, this.maxZ);
 		tess.addVertex(this.minX, this.maxY, this.maxZ);
 		tess.draw();
 	}
@@ -102,32 +109,21 @@ public class Kyzray {
 	 */
 	private LinkedList<XrayBlock> getBlockList()
 	{
-		//		this.logMessage("Seeing through the world...");
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
 		WorldClient world = Minecraft.getMinecraft().theWorld;
-		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
-		this.minX = (int) (player.posX - this.radius);
-		this.maxX = (int) (player.posX + this.radius);		
-		this.minZ = (int) (player.posZ - this.radius);
-		this.maxZ = (int) (player.posZ + this.radius);
-		this.maxY = 255;
+
 		int[] blockCounts = new int[this.blocksToFind.size()];
 		for (int i = 0; i < this.blocksToFind.size(); i++)
 			blockCounts[i] = 0;
 
-		if (this.blocksToFind.contains(Block.getBlockById(0)))
+		if (this.blocksToFind.contains(Block.getBlockById(0)) && this.blocksToFind.size() > 1)
 		{
-			if (this.blocksToFind.size() == 1)
-				this.maxY = 63;
-			else
-			{
-				this.logError("Omitting air from multi-block xray search. Xray for air alone to find underground structures.");
-				this.blocksToFind.remove(Block.getBlockById(0));
-			}
+			this.logError("Omitting air from multi-block xray search. Xray for air alone to find underground structures.");
+			this.blocksToFind.remove(Block.getBlockById(0));
 		}
 		for (int x = this.minX; x < this.maxX; x++)
 		{
-			for (int y = 0; y < this.maxY; y++)
+			for (int y = this.minY; y < this.maxY; y++)
 			{
 				for (int z = this.minZ; z < this.maxZ; z++)
 				{
@@ -143,25 +139,11 @@ public class Kyzray {
 				}
 			}
 		}
-		if (this.blocksToFind.size() == 1
-				&& Block.isEqualTo(this.blocksToFind.get(0), Block.getBlockById(0))) // if air
-		{
-			this.logMessage("Found " + toReturn.size() + " air blocks in " + this.radius
-					+ " block radius from bedrock to sea level. Cuz I assume you're not xraying the sky.");
-		}
-		else
-		{
-			String message = "Found";
-			for (int i = 0; i < this.blocksToFind.size(); i++)
-				message += " " + blockCounts[i] + " " + this.blocksToFind.get(i).getLocalizedName() + ",";
-			this.logMessage(message.substring(0, message.length() - 1) 
-					+ " in " + this.radius + " block radius from bedrock to sky.");
-		}
-		if (toReturn.size() > 15000)
-		{
-			this.logError("Too many blocks! Displaying more will lag.");
-			this.logError("Displayed 15,000 blocks out of " + toReturn.size() + ".");
-		}
+		String message = "Found";
+		for (int i = 0; i < this.blocksToFind.size(); i++)
+			message += " " + blockCounts[i] + " " + this.blocksToFind.get(i).getLocalizedName() + ",";
+		this.logMessage(message.substring(0, message.length() - 1) 
+				+ " in " + this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY);
 		return toReturn;
 	}
 
@@ -173,6 +155,8 @@ public class Kyzray {
 	public String setToFind(String blockString)
 	{
 		this.blocksToFind.clear();
+		if (blockString == null)
+			return "";
 		blockString = blockString.toLowerCase();
 		String[] blocks = blockString.split(",");
 		String toReturn = "Now xraying for blocks:";
@@ -202,14 +186,57 @@ public class Kyzray {
 		}
 		return toReturn;
 	}
+	
+	public void searchSign()
+	{
+		this.setToFind("sign");
+		
+	}
 
 	/**
 	 * "Reloads" the list of blocks to display.
 	 */
 	public void reload()
 	{
-		if (this.blocksToFind.size() > 0)
-			this.blockList = this.getBlockList();
+		if (this.blocksToFind.size() < 1)
+			return;
+		this.reload(0, 255);
+	}
+
+	/**
+	 * "Reloads" the list of blocks to display, with y parameters.
+	 * @param y1 y coordinate 1
+	 * @param y2 y coordinate 2
+	 */
+	public void reload(int y1, int y2)
+	{
+		if (this.blocksToFind.size() < 1)
+			return;
+		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
+		this.reload((int)(player.posX - this.radius), (int)(player.posX + this.radius),
+				y1, y2, (int)(player.posZ - this.radius), (int)(player.posZ + this.radius));
+	}
+
+	/**
+	 * "Reloads the list of blocks to display, with full parameters.
+	 * @param x1 x coord 1
+	 * @param x2 x coord 2
+	 * @param y1 y coord 1
+	 * @param y2 y coord 2
+	 * @param z1 z coord 1
+	 * @param z2 z coord 2
+	 */
+	public void reload(int x1, int x2, int y1, int y2, int z1, int z2)
+	{
+		if (this.blocksToFind.size() < 1)
+			return;
+		this.minX = Math.min(x1, x2);
+		this.maxX = Math.max(x1, x2);
+		this.minY = Math.min(y1, y2);
+		this.maxY = Math.max(y1, y2);
+		this.minZ = Math.min(z1, z2);
+		this.maxZ = Math.max(z1, z2);
+		this.blockList = this.getBlockList();
 	}
 
 	/**
@@ -234,22 +261,22 @@ public class Kyzray {
 	 * Sets whether area display is on or not
 	 * @param isOn If area display is on
 	 */
-	public void setAreaDisplay(boolean isOn)
-	{
-		this.displayArea = isOn;
-	}
-
-	/**
-	 * Getter for the block to find
-	 * @return name of the block being xrayed for
-	 */
-	//	public String getToFind() { return this.blockToFind.getLocalizedName(); }
+	public void setAreaDisplay(boolean isOn) { this.displayArea = isOn; }
 
 	/**
 	 * Getter for the radius to look in
 	 * @return radius being xrayed in
 	 */
 	public int getRadius() { return this.radius; }
+
+	/**
+	 * Getter for if the area should be displayed
+	 * @return whether the area should be displayed
+	 */
+	public boolean getAreaDisplay() { return this.displayArea; }
+
+
+	///// PRIVATE METHODS /////
 
 	/**
 	 * Helper to log a message to the user
@@ -274,6 +301,4 @@ public class Kyzray {
 		this.displayMessage.setChatStyle(style);
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
-
-	public boolean getAreaDisplay() { return this.displayArea; }
 }
