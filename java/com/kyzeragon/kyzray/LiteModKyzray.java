@@ -28,8 +28,8 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	private Kyzray kyzray;
 	private boolean sentCmd;
 
-	ChatStyle style;
-	ChatComponentText displayMessage;
+	private ChatStyle style;
+	private ChatComponentText displayMessage;
 
 	@Override
 	public String getName() { return "Kyzray"; }

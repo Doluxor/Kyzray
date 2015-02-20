@@ -54,11 +54,7 @@ public class Kyzray {
 			block.drawBlock(tess);
 			totalBlocks++;
 			if (totalBlocks > 15000)
-			{
-				this.logError("Too many blocks! Displaying more will lag.");
-				this.logError("Displayed 15,000 blocks out of " + this.blockList.size() + ".");
 				return;
-			}
 		}
 	}
 
@@ -144,6 +140,11 @@ public class Kyzray {
 			message += " " + blockCounts[i] + " " + this.blocksToFind.get(i).getLocalizedName() + ",";
 		this.logMessage(message.substring(0, message.length() - 1) 
 				+ " in " + this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY);
+		if (toReturn.size() > 15000)
+		{
+			this.logError("Too many blocks! Displaying more will lag.");
+			this.logError("Displayed 15,000 blocks out of " + toReturn.size() + ".");
+		}
 		return toReturn;
 	}
 
@@ -186,11 +187,11 @@ public class Kyzray {
 		}
 		return toReturn;
 	}
-	
+
 	public void searchSign()
 	{
 		this.setToFind("sign");
-		
+
 	}
 
 	/**
