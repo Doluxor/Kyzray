@@ -35,7 +35,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "0.9.3"; }
+	public String getVersion() { return "1.0.0"; }
 
 	@Override
 	public void init(File configPath) 
@@ -129,13 +129,13 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				else if (tokens[1].equalsIgnoreCase("clear"))
 				{
 					this.kyzray.setToFind(null);
-					this.kyzray.reload();
+					this.kyzray.reload(false);
 					this.logMessage("Xray display cleared");
 				}
 				else if (tokens[1].equalsIgnoreCase("reload") || tokens[1].equalsIgnoreCase("update"))
 				{
 					this.logMessage("Reloading Kyzray...");
-					this.kyzray.reload();
+					this.kyzray.reload(false);
 				}
 				else if (tokens[1].equalsIgnoreCase("radius") || tokens[1].equalsIgnoreCase("r")) // set radius
 				{
@@ -172,6 +172,11 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 							this.logError("Usage: /kr area [on|off]");
 					}
 				}
+				else if (tokens[1].equalsIgnoreCase("lag"))
+				{
+					this.kyzray.reload(true);
+					this.kyzray.drawXray();
+				}
 				else if (tokens[1].equalsIgnoreCase("block"))
 				{
 					this.logMessage("Usage: /kr <block[,block]> [y1 y2]");
@@ -185,6 +190,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 							"reload|update - Displays new xray area.",
 							"radius|r [radius] - Displays radius or sets new radius.",
 							"area [on|off] - Toggle/on/off the display for xray area.",
+							"lag - Look for possible lag sources.",
 							"help - This help message. Hurrdurr."};
 					this.logMessage(this.getName() + " [v" + this.getVersion() + "] commands");
 					for (String command: commands)
@@ -199,12 +205,12 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 						if (tokens.length == 4)
 						{
 							if (tokens[2].matches("-?[0-9]*") && tokens[3].matches("-?[0-9]*"))
-								this.kyzray.reload(Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]));
+								this.kyzray.reload(Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]), false);
 							else
 								this.logError("Invalid integer. Usage: /kr <block(s)> [y1] [y2]");
 						}
 						else
-							this.kyzray.reload();
+							this.kyzray.reload(false);
 					}
 				}
 			}

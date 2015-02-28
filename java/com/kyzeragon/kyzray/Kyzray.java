@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL11;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockChest;
+import net.minecraft.block.BlockDynamicLiquid;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -43,8 +44,6 @@ public class Kyzray {
 	 */
 	public void drawXray()
 	{
-		if (this.blocksToFind.size() == 0)
-			return;
 		if (this.blockList == null)
 			return;
 		Tessellator tess = Tessellator.instance;
@@ -99,6 +98,79 @@ public class Kyzray {
 		tess.draw();
 	}
 
+	private LinkedList<XrayBlock> findLagWater()
+	{
+		this.logMessage("Looking for 'L' shaped water... this may take a while.");
+		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
+		WorldClient world = Minecraft.getMinecraft().theWorld;
+		Block water = Block.getBlockFromName("water");
+		int blue = water.getMapColor(0).colorValue;
+		int red = 0xFF0000;
+		int numLag = 0;
+		if (this.maxY > 254)
+			this.maxY = 254;
+
+		for (int x = this.minX; x < this.maxX; x++)
+		{
+			for (int z = this.minZ; z < this.maxZ; z++)
+			{
+				for (int y = this.minY; y < this.maxY; y++)
+				{
+					Block currentBlock = world.getBlock(x, y, z);
+
+					if (currentBlock.equals(water))
+					{
+						if (world.getBlock(x, y + 1, z).equals(water)) // check if above is water
+						{
+							boolean isL = false; // TODO: null pointers!
+							if (world.getBlock(x - 1, y, z).equals(water) 
+									&& !world.getBlock(x - 1, y + 1, z).equals(water))
+							{
+								toReturn.add(new XrayBlock(x - 1, y, z, blue, true));
+								isL = true;
+							}
+							if (world.getBlock(x + 1, y, z).equals(water)
+									&& !world.getBlock(x + 1, y + 1, z).equals(water))
+							{
+								toReturn.add(new XrayBlock(x + 1, y, z, blue, true));
+								isL = true;
+							}
+							if (world.getBlock(x, y, z - 1).equals(water)
+									&& !world.getBlock(x, y + 1, z - 1).equals(water))
+							{
+								toReturn.add(new XrayBlock(x, y, z - 1, blue, true));
+								isL = true;
+							}
+							if (world.getBlock(x, y, z + 1).equals(water)
+									&& !world.getBlock(x, y + 1, z + 1).equals(water))
+							{
+								toReturn.add(new XrayBlock(x, y, z + 1, blue, true));
+								isL = true;
+							}
+
+							if (isL == true)
+							{
+								numLag++;
+								toReturn.add(new XrayBlock(x, y, z, red, false));
+								for (int i = y + 1; i < 256; i++)
+								{
+									if (world.getBlock(x, i, z).equals(water))
+										toReturn.add(new XrayBlock(x, i, z, blue, true));
+									else
+										break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		this.logMessage("Found " + numLag + " possible lag sources in " 
+				+ this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY);
+		return toReturn;
+	}
+
+
 	/**
 	 * Finds the list of blocks in the radius
 	 * @return The list of blocks
@@ -119,16 +191,17 @@ public class Kyzray {
 		}
 		for (int x = this.minX; x < this.maxX; x++)
 		{
-			for (int y = this.minY; y < this.maxY; y++)
+			for (int z = this.minZ; z < this.maxZ; z++)
 			{
-				for (int z = this.minZ; z < this.maxZ; z++)
+				for (int y = this.minY; y < this.maxY; y++)
 				{
 					for (int i = 0; i < this.blocksToFind.size(); i++)
 					{
 						Block currentBlock = world.getBlock(x, y, z);
-						if (currentBlock.getLocalizedName().equals(this.blocksToFind.get(i).getLocalizedName()))
+						if (currentBlock.equals(this.blocksToFind.get(i)))
+							//						if (currentBlock.getLocalizedName().equals(this.blocksToFind.get(i).getLocalizedName()))
 						{
-							toReturn.add(new XrayBlock(x, y, z, currentBlock.getMapColor(0).colorValue));
+							toReturn.add(new XrayBlock(x, y, z, currentBlock.getMapColor(0).colorValue, false));
 							blockCounts[i]++;
 						}
 					}
@@ -197,11 +270,11 @@ public class Kyzray {
 	/**
 	 * "Reloads" the list of blocks to display.
 	 */
-	public void reload()
+	public void reload(boolean lag)
 	{
-		if (this.blocksToFind.size() < 1)
+		if (this.blocksToFind.size() < 1 && !lag)
 			return;
-		this.reload(0, 255);
+		this.reload(0, 255, lag);
 	}
 
 	/**
@@ -209,13 +282,13 @@ public class Kyzray {
 	 * @param y1 y coordinate 1
 	 * @param y2 y coordinate 2
 	 */
-	public void reload(int y1, int y2)
+	public void reload(int y1, int y2, boolean lag)
 	{
-		if (this.blocksToFind.size() < 1)
+		if (this.blocksToFind.size() < 1 && !lag)
 			return;
 		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
 		this.reload((int)(player.posX - this.radius), (int)(player.posX + this.radius),
-				y1, y2, (int)(player.posZ - this.radius), (int)(player.posZ + this.radius));
+				y1, y2, (int)(player.posZ - this.radius), (int)(player.posZ + this.radius), lag);
 	}
 
 	/**
@@ -227,9 +300,9 @@ public class Kyzray {
 	 * @param z1 z coord 1
 	 * @param z2 z coord 2
 	 */
-	public void reload(int x1, int x2, int y1, int y2, int z1, int z2)
+	public void reload(int x1, int x2, int y1, int y2, int z1, int z2, boolean lag)
 	{
-		if (this.blocksToFind.size() < 1)
+		if (this.blocksToFind.size() < 1 && !lag)
 			return;
 		this.minX = Math.min(x1, x2);
 		this.maxX = Math.max(x1, x2);
@@ -237,7 +310,10 @@ public class Kyzray {
 		this.maxY = Math.max(y1, y2);
 		this.minZ = Math.min(z1, z2);
 		this.maxZ = Math.max(z1, z2);
-		this.blockList = this.getBlockList();
+		if (lag)
+			this.blockList = this.findLagWater();
+		else
+			this.blockList = this.getBlockList();
 	}
 
 	/**
@@ -249,8 +325,8 @@ public class Kyzray {
 	{ 
 		if (theRadius < 1)
 			this.logError("You can't have a radius that small, uDerp.");
-		else if (theRadius > 64)
-			this.logError(theRadius + " is too large! Maximum allowed radius is 64.");
+		else if (theRadius > 128)
+			this.logError(theRadius + " is too large! Maximum allowed radius is 128.");
 		else
 		{
 			this.radius = theRadius;
