@@ -35,7 +35,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "1.0.0"; }
+	public String getVersion() { return "1.0.2"; }
 
 	@Override
 	public void init(File configPath) 
@@ -129,6 +129,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				else if (tokens[1].equalsIgnoreCase("clear"))
 				{
 					this.kyzray.setToFind(null);
+					this.kyzray.clearBlockList();
 					this.kyzray.reload(false);
 					this.logMessage("Xray display cleared");
 				}
@@ -175,7 +176,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				else if (tokens[1].equalsIgnoreCase("lag"))
 				{
 					this.kyzray.reload(true);
-					this.kyzray.drawXray();
 				}
 				else if (tokens[1].equalsIgnoreCase("block"))
 				{

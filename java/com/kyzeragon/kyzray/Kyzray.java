@@ -120,9 +120,18 @@ public class Kyzray {
 
 					if (currentBlock.equals(water))
 					{
-						if (world.getBlock(x, y + 1, z).equals(water)) // check if above is water
+						boolean aboveWater = true;
+						for (int i = 1; i < 10; i++) // check if above 9 blocks are water
 						{
-							boolean isL = false; // TODO: null pointers!
+							if (!world.getBlock(x, y + i, z).equals(water))
+							{
+								aboveWater = false;
+								break;
+							}
+						}
+						if (aboveWater) // check if above is water
+						{
+							boolean isL = false; // TODO: null pointers?
 							if (world.getBlock(x - 1, y, z).equals(water) 
 									&& !world.getBlock(x - 1, y + 1, z).equals(water))
 							{
@@ -351,6 +360,11 @@ public class Kyzray {
 	 * @return whether the area should be displayed
 	 */
 	public boolean getAreaDisplay() { return this.displayArea; }
+	
+	/**
+	 * Clears the blockList
+	 */
+	public void clearBlockList() { this.blockList.clear(); }
 
 
 	///// PRIVATE METHODS /////
