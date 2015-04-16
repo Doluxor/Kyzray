@@ -47,9 +47,13 @@ public class Kyzray {
 		if (this.blockList == null)
 			return;
 		Tessellator tess = Tessellator.instance;
+		if (tess == null)
+			return;
 		int totalBlocks = 0;
 		for (XrayBlock block: blockList)
 		{
+			if (block == null)
+				return;
 			block.drawBlock(tess);
 			totalBlocks++;
 			if (totalBlocks > 15000)
@@ -100,13 +104,17 @@ public class Kyzray {
 
 	private LinkedList<XrayBlock> findLagWater()
 	{
-		this.logMessage("Looking for 'L' shaped water... this may take a while.");
+		LiteModKyzray.logMessage("Looking for 'L' shaped water... this may take a while.", true);
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
 		WorldClient world = Minecraft.getMinecraft().theWorld;
 		Block water = Block.getBlockFromName("water");
-		int blue = water.getMapColor(0).colorValue;
-		int red = 0xFF0000;
+		int blue = 0x0000FF;
+		int red = 0xAA0000;
+		int orange = 0xFFAA00;
+		int yellow = 0xFFFF55;
 		int numLag = 0;
+		int dLag = 0;
+		int idkLag = 0;
 		if (this.maxY > 254)
 			this.maxY = 254;
 
@@ -123,8 +131,8 @@ public class Kyzray {
 						boolean aboveWater = true;
 						for (int i = 1; i < 10; i++) // check if above 9 blocks are water
 						{
-							if (!world.getBlock(x, y + i, z).equals(water))
-							{
+							if (!world.getBlock(x, y + 10 - i, z).equals(water))
+							{ // check top-down: faster!
 								aboveWater = false;
 								break;
 							}
@@ -169,13 +177,86 @@ public class Kyzray {
 										break;
 								}
 							}
+							else
+							{
+								// now check for same-level diagonal
+								boolean isIDKL = false; // idk if lag :D
+								if (world.getBlock(x - 1, y, z - 1).equals(water)
+										&& !world.getBlock(x - 1, y + 1, z - 1).equals(water))
+								{
+									toReturn.addFirst(new XrayBlock(x - 1, y, z - 1, yellow, false));
+									isIDKL = true;
+								}
+								if (world.getBlock(x - 1, y, z + 1).equals(water)
+										&& !world.getBlock(x - 1, y + 1, z + 1).equals(water))
+								{
+									toReturn.addFirst(new XrayBlock(x - 1, y, z + 1, yellow, false));
+									isIDKL = true;
+								}
+								if (world.getBlock(x + 1, y, z - 1).equals(water)
+										&& !world.getBlock(x + 1, y + 1, z - 1).equals(water))
+								{
+									toReturn.addFirst(new XrayBlock(x + 1, y, z - 1, yellow, false));
+									isIDKL = true;
+								}
+								if (world.getBlock(x + 1, y, z + 1).equals(water)
+										&& !world.getBlock(x + 1, y + 1, z + 1).equals(water))
+								{
+									toReturn.addFirst(new XrayBlock(x + 1, y, z + 1, yellow, false));
+									isIDKL = true;
+								}
+
+								if (isIDKL)
+								{
+									idkLag++;
+									toReturn.addFirst(new XrayBlock(x, y, z, yellow, false));
+									for (int i = y + 1; i < 256; i++)
+									{
+										if (world.getBlock(x, i, z).equals(water))
+											toReturn.addFirst(new XrayBlock(x, i, z, blue, true));
+										else
+											break;
+									}
+								}
+
+								if (y > 0) // now check for diagonal lag water 1 level under
+								{
+									if (!world.getBlock(x, y - 1, z).equals(water))
+									{ // below must be water, sides are already accounted for in isL
+										boolean isDL = false;
+										for (int ix = -1; ix <= 1; ix++)
+										{
+											for (int iz = -1; iz <= 1; iz++)
+											{ // check the 9 just below the water, don't care about center
+												if (world.getBlock(x + ix, y - 1, z + iz).equals(water))
+												{
+													isDL = true;
+													toReturn.addFirst(new XrayBlock(x + ix, y - 1, z + iz, orange, false));
+												}
+											}
+										}
+										if (isDL)
+										{
+											toReturn.addFirst(new XrayBlock(x, y, z, orange, false));
+											dLag++;
+											for (int i = y + 1; i < 256; i++)
+												if (world.getBlock(x, i, z).equals(water))
+													toReturn.addFirst(new XrayBlock(x, i, z, blue, true));
+												else
+													break;
+										}
+									}
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-		this.logMessage("Found " + numLag + " possible lag sources in " 
-				+ this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY);
+		LiteModKyzray.logMessage("Found in " + this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY + ":", true); 
+		LiteModKyzray.logMessage("      §8- §4" + numLag + " §apossible connected L water", false);
+		LiteModKyzray.logMessage("      §8- §6" + dLag + " §apossible lower-level unconnected L water", false);
+		LiteModKyzray.logMessage("      §8- §e" + idkLag + " §apossible same-level unconnected L water", false);
 		return toReturn;
 	}
 
@@ -195,7 +276,7 @@ public class Kyzray {
 
 		if (this.blocksToFind.contains(Block.getBlockById(0)) && this.blocksToFind.size() > 1)
 		{
-			this.logError("Omitting air from multi-block xray search. Xray for air alone to find underground structures.");
+			LiteModKyzray.logError("Omitting air from multi-block xray search. Xray for air alone to find underground structures.");
 			this.blocksToFind.remove(Block.getBlockById(0));
 		}
 		for (int x = this.minX; x < this.maxX; x++)
@@ -220,12 +301,12 @@ public class Kyzray {
 		String message = "Found";
 		for (int i = 0; i < this.blocksToFind.size(); i++)
 			message += " " + blockCounts[i] + " " + this.blocksToFind.get(i).getLocalizedName() + ",";
-		this.logMessage(message.substring(0, message.length() - 1) 
-				+ " in " + this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY);
+		LiteModKyzray.logMessage(message.substring(0, message.length() - 1) 
+				+ " in " + this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY, true);
 		if (toReturn.size() > 15000)
 		{
-			this.logError("Too many blocks! Displaying more will lag.");
-			this.logError("Displayed 15,000 blocks out of " + toReturn.size() + ".");
+			LiteModKyzray.logError("Too many blocks! Displaying more will lag.");
+			LiteModKyzray.logError("Displayed 15,000 blocks out of " + toReturn.size() + ".");
 		}
 		return toReturn;
 	}
@@ -333,13 +414,13 @@ public class Kyzray {
 	public void setRadius(int theRadius) 
 	{ 
 		if (theRadius < 1)
-			this.logError("You can't have a radius that small, uDerp.");
+			LiteModKyzray.logError("You can't have a radius that small, uDerp.");
 		else if (theRadius > 128)
-			this.logError(theRadius + " is too large! Maximum allowed radius is 128.");
+			LiteModKyzray.logError(theRadius + " is too large! Maximum allowed radius is 128.");
 		else
 		{
 			this.radius = theRadius;
-			this.logMessage("Xray radius set to " + theRadius);
+			LiteModKyzray.logMessage("Xray radius set to " + theRadius, true);
 		}
 	}
 
@@ -360,36 +441,9 @@ public class Kyzray {
 	 * @return whether the area should be displayed
 	 */
 	public boolean getAreaDisplay() { return this.displayArea; }
-	
+
 	/**
 	 * Clears the blockList
 	 */
 	public void clearBlockList() { this.blockList.clear(); }
-
-
-	///// PRIVATE METHODS /////
-
-	/**
-	 * Helper to log a message to the user
-	 * @param message Message to be logged
-	 */
-	private void logMessage(String message)
-	{
-		this.style.setColor(EnumChatFormatting.AQUA);
-		this.displayMessage = new ChatComponentText(message);
-		this.displayMessage.setChatStyle(style);
-		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
-	}
-
-	/**
-	 * Helper to log error to user in red text
-	 * @param message Message to be logged
-	 */
-	private void logError(String message)
-	{
-		this.style.setColor(EnumChatFormatting.RED);
-		this.displayMessage = new ChatComponentText(message);
-		this.displayMessage.setChatStyle(style);
-		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
-	}
 }

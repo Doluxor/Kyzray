@@ -28,9 +28,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	private Kyzray kyzray;
 	private boolean sentCmd;
 
-	private ChatStyle style;
-	private ChatComponentText displayMessage;
-
 	@Override
 	public String getName() { return "Kyzray"; }
 
@@ -43,9 +40,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 		this.xrayOn = false;
 		this.kyzray = new Kyzray();
 		this.sentCmd = false;
-
-		this.style = new ChatStyle();
-		this.style.setColor(EnumChatFormatting.AQUA);
 	}
 
 	@Override
@@ -119,29 +113,29 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				if (tokens[1].equalsIgnoreCase("on"))
 				{
 					this.xrayOn = true;
-					this.logMessage("Xray: ON");
+					this.logMessage("Xray: ON", true);
 				}
 				else if (tokens[1].equalsIgnoreCase("off"))
 				{
 					this.xrayOn = false;
-					this.logMessage("Xray: OFF");
+					this.logMessage("Xray: OFF", true);
 				}
 				else if (tokens[1].equalsIgnoreCase("clear"))
 				{
 					this.kyzray.setToFind(null);
 					this.kyzray.clearBlockList();
 					this.kyzray.reload(false);
-					this.logMessage("Xray display cleared");
+					this.logMessage("Xray display cleared", true);
 				}
 				else if (tokens[1].equalsIgnoreCase("reload") || tokens[1].equalsIgnoreCase("update"))
 				{
-					this.logMessage("Reloading Kyzray...");
+					this.logMessage("Reloading Kyzray...", true);
 					this.kyzray.reload(false);
 				}
 				else if (tokens[1].equalsIgnoreCase("radius") || tokens[1].equalsIgnoreCase("r")) // set radius
 				{
 					if (tokens.length == 2)
-						this.logMessage("Xray radius is currently " + this.kyzray.getRadius());
+						this.logMessage("Xray radius is currently " + this.kyzray.getRadius(), true);
 					else
 					{
 						if (!tokens[2].matches("[0-9]+"))
@@ -155,19 +149,19 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 					if (tokens.length == 2)
 					{
 						this.kyzray.setAreaDisplay(!this.kyzray.getAreaDisplay());
-						this.logMessage("Area display toggled: " + this.kyzray.getAreaDisplay());
+						this.logMessage("Area display toggled: " + this.kyzray.getAreaDisplay(), true);
 					}
 					else
 					{
 						if (tokens[2].equalsIgnoreCase("on"))
 						{
 							this.kyzray.setAreaDisplay(true);
-							this.logMessage("Area display: ON");
+							this.logMessage("Area display: ON", true);
 						}
 						else if (tokens[2].equalsIgnoreCase("off"))
 						{
 							this.kyzray.setAreaDisplay(false);
-							this.logMessage("Area display: OFF");
+							this.logMessage("Area display: OFF", true);
 						}
 						else
 							this.logError("Usage: /kr area [on|off]");
@@ -179,7 +173,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				}
 				else if (tokens[1].equalsIgnoreCase("block"))
 				{
-					this.logMessage("Usage: /kr <block[,block]> [y1 y2]");
+					this.logError("Usage: /kr <block[,block]> [y1 y2]");
 				}
 				else if (tokens[1].equalsIgnoreCase("help"))
 				{
@@ -192,14 +186,14 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 							"area [on|off] - Toggle/on/off the display for xray area.",
 							"lag - Look for possible lag sources.",
 							"help - This help message. Hurrdurr."};
-					this.logMessage(this.getName() + " [v" + this.getVersion() + "] commands");
+					this.logMessage(this.getName() + " §8[§2v" + this.getVersion() + "§8] §acommands", false);
 					for (String command: commands)
-						this.logMessage("/kr " + command);
+						this.logMessage("/kr " + command, false);
 				}
 				else // set the block to xray for
 				{
 					String result = this.kyzray.setToFind(tokens[1]);
-					this.logMessage(result);
+					this.logMessage(result, true);
 					if (result.matches("Now xraying for.*"))
 					{
 						if (tokens.length == 4)
@@ -216,8 +210,8 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 			}
 			else // display version and help command
 			{
-				this.logMessage("Kyzray [v" + this.getVersion() + "] by Kyzeragon");
-				this.logMessage("Type /kr help for commands");
+				this.logMessage("Kyzray §8[§2v" + this.getVersion() + "§8] §aby Kyzeragon", false);
+				this.logMessage("Type §2/kr help §afor commands", false);
 			}
 		}
 	}
@@ -235,30 +229,28 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 		}
 		return true;
 	}
-
 	/**
-	 * Helper to log a message to the user
-	 * @param message Message to be logged
+	 * Logs the message to the user
+	 * @param message The message to log
+	 * @param addPrefix Whether to add the mod-specific prefix or not
 	 */
-	private void logMessage(String message)
-	{
-		this.style.setColor(EnumChatFormatting.AQUA);
-		this.displayMessage = new ChatComponentText(message);
-		this.displayMessage.setChatStyle(style);
+	public static void logMessage(String message, boolean addPrefix)
+	{// "§8[§2Kyzray§8] §a"
+		if (addPrefix)
+			message = "§8[§2Kyzray§8] §a" + message;
+		ChatComponentText displayMessage = new ChatComponentText(message);
+		displayMessage.setChatStyle((new ChatStyle()).setColor(EnumChatFormatting.GREEN));
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
 
 	/**
-	 * Helper to log error to user in red text
-	 * @param message Message to be logged
+	 * Logs the error message to the user
+	 * @param message The error message to log
 	 */
-	private void logError(String message)
+	public static void logError(String message)
 	{
-		this.style.setColor(EnumChatFormatting.RED);
-		this.displayMessage = new ChatComponentText(message);
-		this.displayMessage.setChatStyle(style);
+		ChatComponentText displayMessage = new ChatComponentText("§8[§4!§8] §c" + message + " §8[§4!§8]");
+		displayMessage.setChatStyle((new ChatStyle()).setColor(EnumChatFormatting.RED));
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
-
-
 }
