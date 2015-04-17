@@ -222,14 +222,15 @@ public class Kyzray {
 								if (y > 0) // now check for diagonal lag water 1 level under
 								{
 									if (!world.getBlock(x, y - 1, z).equals(water))
-									{ // below must be water, sides are already accounted for in isL
+									{ // below must be water
 										boolean isDL = false;
 										for (int ix = -1; ix <= 1; ix++)
 										{
 											for (int iz = -1; iz <= 1; iz++)
 											{ // check the 9 just below the water, don't care about center
-												if (world.getBlock(x + ix, y - 1, z + iz).equals(water))
-												{
+												if (world.getBlock(x + ix, y - 1, z + iz).equals(water)
+														&& !world.getBlock(x + ix, y, z + iz).equals(water))
+												{ // block above it can't be water
 													isDL = true;
 													toReturn.addFirst(new XrayBlock(x + ix, y - 1, z + iz, orange, false));
 												}

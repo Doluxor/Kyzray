@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.ClickEvent.Action;
 import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.util.ChatComponentText;
@@ -32,7 +34,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "1.0.2"; }
+	public String getVersion() { return "1.1.1"; }
 
 	@Override
 	public void init(File configPath) 
@@ -189,6 +191,12 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 					this.logMessage(this.getName() + " §8[§2v" + this.getVersion() + "§8] §acommands", false);
 					for (String command: commands)
 						this.logMessage("/kr " + command, false);
+					IChatComponent link = new ChatComponentText("Click here for the wiki!");
+					ChatStyle linkStyle = new ChatStyle();
+					linkStyle.setColor(EnumChatFormatting.DARK_GREEN);
+					linkStyle.setChatClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Kyzderp/Kyzray/wiki"));
+					link.setChatStyle(linkStyle);
+					Minecraft.getMinecraft().thePlayer.addChatComponentMessage(link);
 				}
 				else // set the block to xray for
 				{
