@@ -20,15 +20,16 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
 import com.mumfrey.liteloader.ChatFilter;
+import com.mumfrey.liteloader.OutboundChatFilter;
 import com.mumfrey.liteloader.OutboundChatListener;
 import com.mumfrey.liteloader.PostRenderListener;
 import com.mumfrey.liteloader.Tickable;
 
-public class LiteModKyzray implements PostRenderListener, OutboundChatListener, ChatFilter {
+public class LiteModKyzray implements PostRenderListener, OutboundChatFilter 
+{
 
 	private boolean xrayOn;
 	private Kyzray kyzray;
-	private boolean sentCmd;
 
 	@Override
 	public String getName() { return "Kyzray"; }
@@ -41,7 +42,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	{
 		this.xrayOn = false;
 		this.kyzray = new Kyzray();
-		this.sentCmd = false;
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				-(player.prevPosY + (player.posY - player.prevPosY) * partialTicks),
 				-(player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks));
 
-		Tessellator tess = Tessellator.instance;
+		Tessellator tess = Tessellator.getInstance();
 		this.kyzray.drawXray();
 		if (this.kyzray.getAreaDisplay())
 			this.kyzray.drawArea();
@@ -103,13 +103,13 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 	 * Handles player's /kr commands
 	 */
 	@Override
-	public void onSendChatMessage(C01PacketChatMessage packet, String message) {
+	public boolean onSendChatMessage(String message) 
+	{
 		// TODO: /kr sign -> search words?
 		// TODO: use x,z params? or pos?
 		String[] tokens = message.split(" ");
 		if (tokens.length > 0 && tokens[0].equalsIgnoreCase("/kr"))
 		{
-			this.sentCmd = true;
 			if (tokens.length > 1)
 			{
 				if (tokens[1].equalsIgnoreCase("on"))
@@ -221,22 +221,11 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatListener, 
 				this.logMessage("Kyzray §8[§2v" + this.getVersion() + "§8] §aby Kyzeragon", false);
 				this.logMessage("Type §2/kr help §afor commands", false);
 			}
-		}
-	}
-
-	/**
-	 * Chat filter to not get Unknown command error... bleh
-	 */
-	@Override
-	public boolean onChat(S02PacketChat chatPacket, IChatComponent chat,
-			String message) {
-		if (message.matches(".*nknown.*ommand.*") && this.sentCmd)
-		{
-			this.sentCmd = false;
 			return false;
 		}
 		return true;
 	}
+
 	/**
 	 * Logs the message to the user
 	 * @param message The message to log

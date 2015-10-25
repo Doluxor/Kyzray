@@ -33,35 +33,35 @@ public class XrayBlock {
 			double maxX, double maxY, double maxZ)
 	{
 		GL11.glLineWidth(3.0f);
-		tess.startDrawing(GL11.GL_LINE_LOOP);
-		tess.setColorRGBA_I(color, 200);
-		tess.addVertex(minX, minY, minZ);
-		tess.addVertex(maxX, minY, minZ);
-		tess.addVertex(maxX, minY, maxZ);
-		tess.addVertex(minX, minY, maxZ);
+		tess.getWorldRenderer().startDrawing(GL11.GL_LINE_LOOP);
+		tess.getWorldRenderer().setColorRGBA_I(color, 200);
+		tess.getWorldRenderer().addVertex(minX, minY, minZ);
+		tess.getWorldRenderer().addVertex(maxX, minY, minZ);
+		tess.getWorldRenderer().addVertex(maxX, minY, maxZ);
+		tess.getWorldRenderer().addVertex(minX, minY, maxZ);
 		tess.draw();
 		
-		tess.startDrawing(GL11.GL_LINE_LOOP);
-		tess.setColorRGBA_I(color, 200);
-		tess.addVertex(minX, maxY, minZ);
-		tess.addVertex(maxX, maxY, minZ);
-		tess.addVertex(maxX, maxY, maxZ);
-		tess.addVertex(minX, maxY, maxZ);
+		tess.getWorldRenderer().startDrawing(GL11.GL_LINE_LOOP);
+		tess.getWorldRenderer().setColorRGBA_I(color, 200);
+		tess.getWorldRenderer().addVertex(minX, maxY, minZ);
+		tess.getWorldRenderer().addVertex(maxX, maxY, minZ);
+		tess.getWorldRenderer().addVertex(maxX, maxY, maxZ);
+		tess.getWorldRenderer().addVertex(minX, maxY, maxZ);
 		tess.draw();
 		
-		tess.startDrawing(GL11.GL_LINES);
-		tess.setColorRGBA_I(color, 200);
-		tess.addVertex(minX, minY, minZ);
-		tess.addVertex(minX, maxY, minZ);
+		tess.getWorldRenderer().startDrawing(GL11.GL_LINES);
+		tess.getWorldRenderer().setColorRGBA_I(color, 200);
+		tess.getWorldRenderer().addVertex(minX, minY, minZ);
+		tess.getWorldRenderer().addVertex(minX, maxY, minZ);
 		
-		tess.addVertex(maxX, minY, minZ);
-		tess.addVertex(maxX, maxY, minZ);
+		tess.getWorldRenderer().addVertex(maxX, minY, minZ);
+		tess.getWorldRenderer().addVertex(maxX, maxY, minZ);
 		
-		tess.addVertex(maxX, minY, maxZ);
-		tess.addVertex(maxX, maxY, maxZ);
+		tess.getWorldRenderer().addVertex(maxX, minY, maxZ);
+		tess.getWorldRenderer().addVertex(maxX, maxY, maxZ);
 		
-		tess.addVertex(minX, minY, maxZ);
-		tess.addVertex(minX, maxY, maxZ);
+		tess.getWorldRenderer().addVertex(minX, minY, maxZ);
+		tess.getWorldRenderer().addVertex(minX, maxY, maxZ);
 		tess.draw();
 	}
 }

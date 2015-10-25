@@ -1,23 +1,17 @@
 package com.kyzeragon.kyzray;
 
 import java.util.LinkedList;
-import java.util.List;
-
-import org.lwjgl.opengl.GL11;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockAir;
-import net.minecraft.block.BlockChest;
-import net.minecraft.block.BlockDynamicLiquid;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityClientPlayerMP;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.tileentity.TileEntityChest;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.Vec3;
+
+import org.lwjgl.opengl.GL11;
 
 public class Kyzray {
 
@@ -46,7 +40,7 @@ public class Kyzray {
 	{
 		if (this.blockList == null)
 			return;
-		Tessellator tess = Tessellator.instance;
+		Tessellator tess = Tessellator.getInstance();
 		if (tess == null)
 			return;
 		int totalBlocks = 0;
@@ -68,37 +62,37 @@ public class Kyzray {
 	{
 		if (this.blocksToFind.size() == 0)
 			return;
-		Tessellator tess = Tessellator.instance;
+		Tessellator tess = Tessellator.getInstance();
 		GL11.glLineWidth(5.0f);
-		tess.startDrawing(GL11.GL_LINE_LOOP);
-		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.addVertex(this.minX, this.minY, this.minZ);
-		tess.addVertex(this.maxX, this.minY, this.minZ);
-		tess.addVertex(this.maxX, this.minY, this.maxZ);
-		tess.addVertex(this.minX, this.minY, this.maxZ);
+		tess.getWorldRenderer().startDrawing(GL11.GL_LINE_LOOP);
+		tess.getWorldRenderer().setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
+		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.maxZ);
+		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.maxZ);
 		tess.draw();
 
-		tess.startDrawing(GL11.GL_LINE_LOOP);
-		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.addVertex(this.minX, this.maxY, this.minZ);
-		tess.addVertex(this.maxX, this.maxY, this.minZ);
-		tess.addVertex(this.maxX, this.maxY, this.maxZ);
-		tess.addVertex(this.minX, this.maxY, this.maxZ);
+		tess.getWorldRenderer().startDrawing(GL11.GL_LINE_LOOP);
+		tess.getWorldRenderer().setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
+		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.maxZ);
+		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.maxZ);
 		tess.draw();
 
-		tess.startDrawing(GL11.GL_LINES);
-		tess.setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.addVertex(this.minX, this.minY, this.minZ);
-		tess.addVertex(this.minX, this.maxY, this.minZ);
+		tess.getWorldRenderer().startDrawing(GL11.GL_LINES);
+		tess.getWorldRenderer().setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
+		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.minZ);
 
-		tess.addVertex(this.maxX, this.minY, this.minZ);
-		tess.addVertex(this.maxX, this.maxY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.minZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.minZ);
 
-		tess.addVertex(this.maxX, this.minY, this.maxZ);
-		tess.addVertex(this.maxX, this.maxY, this.maxZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.maxZ);
+		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.maxZ);
 
-		tess.addVertex(this.minX, this.minY, this.maxZ);
-		tess.addVertex(this.minX, this.maxY, this.maxZ);
+		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.maxZ);
+		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.maxZ);
 		tess.draw();
 	}
 
@@ -124,14 +118,14 @@ public class Kyzray {
 			{
 				for (int y = this.minY; y < this.maxY; y++)
 				{
-					Block currentBlock = world.getBlock(x, y, z);
+					Block currentBlock = world.getBlockState(new BlockPos(x, y, z)).getBlock();
 
 					if (currentBlock.equals(water))
 					{
 						boolean aboveWater = true;
 						for (int i = 1; i < 10; i++) // check if above 9 blocks are water
 						{
-							if (!world.getBlock(x, y + 10 - i, z).equals(water))
+							if (!world.getBlockState(new BlockPos(x, y + 10 - i, z)).getBlock().equals(water))
 							{ // check top-down: faster!
 								aboveWater = false;
 								break;
@@ -140,26 +134,26 @@ public class Kyzray {
 						if (aboveWater) // check if above is water
 						{
 							boolean isL = false; // TODO: null pointers?
-							if (world.getBlock(x - 1, y, z).equals(water) 
-									&& !world.getBlock(x - 1, y + 1, z).equals(water))
+							if (world.getBlockState(new BlockPos(x - 1, y, z)).getBlock().equals(water) 
+									&& !world.getBlockState(new BlockPos(x - 1, y + 1, z)).getBlock().equals(water))
 							{
 								toReturn.add(new XrayBlock(x - 1, y, z, blue, true));
 								isL = true;
 							}
-							if (world.getBlock(x + 1, y, z).equals(water)
-									&& !world.getBlock(x + 1, y + 1, z).equals(water))
+							if (world.getBlockState(new BlockPos(x + 1, y, z)).getBlock().equals(water)
+									&& !world.getBlockState(new BlockPos(x + 1, y + 1, z)).getBlock().equals(water))
 							{
 								toReturn.add(new XrayBlock(x + 1, y, z, blue, true));
 								isL = true;
 							}
-							if (world.getBlock(x, y, z - 1).equals(water)
-									&& !world.getBlock(x, y + 1, z - 1).equals(water))
+							if (world.getBlockState(new BlockPos(x, y, z - 1)).getBlock().equals(water)
+									&& !world.getBlockState(new BlockPos(x, y + 1, z - 1)).getBlock().equals(water))
 							{
 								toReturn.add(new XrayBlock(x, y, z - 1, blue, true));
 								isL = true;
 							}
-							if (world.getBlock(x, y, z + 1).equals(water)
-									&& !world.getBlock(x, y + 1, z + 1).equals(water))
+							if (world.getBlockState(new BlockPos(x, y, z + 1)).getBlock().equals(water)
+									&& !world.getBlockState(new BlockPos(x, y + 1, z + 1)).getBlock().equals(water))
 							{
 								toReturn.add(new XrayBlock(x, y, z + 1, blue, true));
 								isL = true;
@@ -171,7 +165,7 @@ public class Kyzray {
 								toReturn.add(new XrayBlock(x, y, z, red, false));
 								for (int i = y + 1; i < 256; i++)
 								{
-									if (world.getBlock(x, i, z).equals(water))
+									if (world.getBlockState(new BlockPos(x, i, z)).getBlock().equals(water))
 										toReturn.add(new XrayBlock(x, i, z, blue, true));
 									else
 										break;
@@ -181,26 +175,26 @@ public class Kyzray {
 							{
 								// now check for same-level diagonal
 								boolean isIDKL = false; // idk if lag :D
-								if (world.getBlock(x - 1, y, z - 1).equals(water)
-										&& !world.getBlock(x - 1, y + 1, z - 1).equals(water))
+								if (world.getBlockState(new BlockPos(x - 1, y, z - 1)).getBlock().equals(water)
+										&& !world.getBlockState(new BlockPos(x - 1, y + 1, z - 1)).getBlock().equals(water))
 								{
 									toReturn.addFirst(new XrayBlock(x - 1, y, z - 1, yellow, false));
 									isIDKL = true;
 								}
-								if (world.getBlock(x - 1, y, z + 1).equals(water)
-										&& !world.getBlock(x - 1, y + 1, z + 1).equals(water))
+								if (world.getBlockState(new BlockPos(x - 1, y, z + 1)).getBlock().equals(water)
+										&& !world.getBlockState(new BlockPos(x - 1, y + 1, z + 1)).getBlock().equals(water))
 								{
 									toReturn.addFirst(new XrayBlock(x - 1, y, z + 1, yellow, false));
 									isIDKL = true;
 								}
-								if (world.getBlock(x + 1, y, z - 1).equals(water)
-										&& !world.getBlock(x + 1, y + 1, z - 1).equals(water))
+								if (world.getBlockState(new BlockPos(x + 1, y, z - 1)).getBlock().equals(water)
+										&& !world.getBlockState(new BlockPos(x + 1, y + 1, z - 1)).getBlock().equals(water))
 								{
 									toReturn.addFirst(new XrayBlock(x + 1, y, z - 1, yellow, false));
 									isIDKL = true;
 								}
-								if (world.getBlock(x + 1, y, z + 1).equals(water)
-										&& !world.getBlock(x + 1, y + 1, z + 1).equals(water))
+								if (world.getBlockState(new BlockPos(x + 1, y, z + 1)).getBlock().equals(water)
+										&& !world.getBlockState(new BlockPos(x + 1, y + 1, z + 1)).getBlock().equals(water))
 								{
 									toReturn.addFirst(new XrayBlock(x + 1, y, z + 1, yellow, false));
 									isIDKL = true;
@@ -212,7 +206,7 @@ public class Kyzray {
 									toReturn.addFirst(new XrayBlock(x, y, z, yellow, false));
 									for (int i = y + 1; i < 256; i++)
 									{
-										if (world.getBlock(x, i, z).equals(water))
+										if (world.getBlockState(new BlockPos(x, i, z)).getBlock().equals(water))
 											toReturn.addFirst(new XrayBlock(x, i, z, blue, true));
 										else
 											break;
@@ -221,15 +215,15 @@ public class Kyzray {
 
 								if (y > 0) // now check for diagonal lag water 1 level under
 								{
-									if (!world.getBlock(x, y - 1, z).equals(water))
+									if (!world.getBlockState(new BlockPos(x, y - 1, z)).getBlock().equals(water))
 									{ // below must be water
 										boolean isDL = false;
 										for (int ix = -1; ix <= 1; ix++)
 										{
 											for (int iz = -1; iz <= 1; iz++)
 											{ // check the 9 just below the water, don't care about center
-												if (world.getBlock(x + ix, y - 1, z + iz).equals(water)
-														&& !world.getBlock(x + ix, y, z + iz).equals(water))
+												if (world.getBlockState(new BlockPos(x + ix, y - 1, z + iz)).getBlock().equals(water)
+														&& !world.getBlockState(new BlockPos(x + ix, y, z + iz)).getBlock().equals(water))
 												{ // block above it can't be water
 													isDL = true;
 													toReturn.addFirst(new XrayBlock(x + ix, y - 1, z + iz, orange, false));
@@ -241,7 +235,7 @@ public class Kyzray {
 											toReturn.addFirst(new XrayBlock(x, y, z, orange, false));
 											dLag++;
 											for (int i = y + 1; i < 256; i++)
-												if (world.getBlock(x, i, z).equals(water))
+												if (world.getBlockState(new BlockPos(x, i, z)).getBlock().equals(water))
 													toReturn.addFirst(new XrayBlock(x, i, z, blue, true));
 												else
 													break;
@@ -288,11 +282,12 @@ public class Kyzray {
 				{
 					for (int i = 0; i < this.blocksToFind.size(); i++)
 					{
-						Block currentBlock = world.getBlock(x, y, z);
+						Block currentBlock = world.getBlockState(new BlockPos(x, y, z)).getBlock();
 						if (currentBlock.equals(this.blocksToFind.get(i)))
 							//						if (currentBlock.getLocalizedName().equals(this.blocksToFind.get(i).getLocalizedName()))
 						{
-							toReturn.add(new XrayBlock(x, y, z, currentBlock.getMapColor(0).colorValue, false));
+							toReturn.add(new XrayBlock(x, y, z, 
+									currentBlock.getMapColor(currentBlock.getDefaultState()).colorValue, false));
 							blockCounts[i]++;
 						}
 					}
@@ -328,21 +323,25 @@ public class Kyzray {
 		for (String findBlock: blocks)
 		{
 			if (findBlock.equals("sign"))
-				findBlock = "wall_sign";
-			if (Block.blockRegistry.containsKey(findBlock))
 			{
-				if (!this.blocksToFind.contains((Block)Block.blockRegistry.getObject(findBlock)))
+				this.blocksToFind.add(Block.getBlockFromName("wall_sign"));
+				this.blocksToFind.add(Block.getBlockFromName("standing_sign"));
+				toReturn += " Sign";
+			}
+			else if (Block.getBlockFromName(findBlock) != null)
+			{
+				if (!this.blocksToFind.contains(Block.getBlockFromName(findBlock)))
 				{
-					this.blocksToFind.add((Block)Block.blockRegistry.getObject(findBlock));
+					this.blocksToFind.add(Block.getBlockFromName(findBlock));
 					toReturn += " " + this.blocksToFind.getLast().getLocalizedName();
 				}
 			}
 			else if (findBlock.matches("[0-9]+")
-					&& Block.blockRegistry.containsID(Integer.parseInt(findBlock)))
+					&& Block.blockRegistry.getObjectById(Integer.parseInt(findBlock)) != null)
 			{
-				if (!this.blocksToFind.contains((Block)Block.blockRegistry.getObjectForID(Integer.parseInt(findBlock))))
+				if (!this.blocksToFind.contains((Block)Block.blockRegistry.getObjectById(Integer.parseInt(findBlock))))
 				{
-					this.blocksToFind.add((Block)Block.blockRegistry.getObjectForID(Integer.parseInt(findBlock)));
+					this.blocksToFind.add((Block)Block.blockRegistry.getObjectById(Integer.parseInt(findBlock)));
 					toReturn += " " + this.blocksToFind.getLast().getLocalizedName();
 				}
 			}
@@ -355,7 +354,7 @@ public class Kyzray {
 	public void searchSign()
 	{
 		this.setToFind("sign");
-
+		// TODO
 	}
 
 	/**
@@ -377,7 +376,7 @@ public class Kyzray {
 	{
 		if (this.blocksToFind.size() < 1 && !lag)
 			return;
-		EntityClientPlayerMP player = Minecraft.getMinecraft().thePlayer;
+		EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
 		this.reload((int)(player.posX - this.radius), (int)(player.posX + this.radius),
 				y1, y2, (int)(player.posZ - this.radius), (int)(player.posZ + this.radius), lag);
 	}
