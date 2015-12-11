@@ -35,7 +35,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "1.2.0"; }
+	public String getVersion() { return "1.3.0"; }
 
 	@Override
 	public void init(File configPath) 
