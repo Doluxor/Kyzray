@@ -2,46 +2,49 @@ package com.kyzeragon.kyzray;
 
 import java.io.File;
 
-import org.lwjgl.opengl.GL11;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.ClickEvent.Action;
-import net.minecraft.network.play.client.C01PacketChatMessage;
-import net.minecraft.network.play.server.S02PacketChat;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
-import com.mumfrey.liteloader.ChatFilter;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
+
 import com.mumfrey.liteloader.OutboundChatFilter;
-import com.mumfrey.liteloader.OutboundChatListener;
 import com.mumfrey.liteloader.PostRenderListener;
-import com.mumfrey.liteloader.Tickable;
+import com.mumfrey.liteloader.PreRenderListener;
+import com.mumfrey.liteloader.core.LiteLoader;
 
-public class LiteModKyzray implements PostRenderListener, OutboundChatFilter 
+public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, PreRenderListener 
 {
-
 	private boolean xrayOn;
 	private Kyzray kyzray;
+	private SeeThrough seeThrough;
+	private static KeyBinding seeThroughBinding;
 
 	@Override
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "1.1.1"; }
+	public String getVersion() { return "1.2.0"; }
 
 	@Override
 	public void init(File configPath) 
 	{
 		this.xrayOn = false;
 		this.kyzray = new Kyzray();
+		this.seeThrough = new SeeThrough();
+		this.seeThroughBinding = new KeyBinding("key.kyzray.seethrough", Keyboard.CHAR_NONE, "key.categories.litemods");
+		LiteLoader.getInput().registerKeyBinding(this.seeThroughBinding);
 	}
 
 	@Override
@@ -52,7 +55,10 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter
 	 * Draw the xrayed blocks.
 	 */
 	@Override
-	public void onPostRenderEntities(float partialTicks) {
+	public void onPostRenderEntities(float partialTicks) 
+	{
+		
+		
 		if (!this.xrayOn)
 			return;
 
@@ -97,7 +103,16 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter
 	}
 
 	@Override
-	public void onPostRender(float partialTicks) {}
+	public void onRenderTerrain(float partialTicks, int pass) 
+	{
+		if (Minecraft.getMinecraft().currentScreen == null 
+				&& Keyboard.isKeyDown(this.seeThroughBinding.getKeyCode()))
+		{
+			this.seeThrough.setObliqueNearPlaneClip(0.0f, 0.0f, -1.0f);
+		}
+	}
+	
+
 
 	/**
 	 * Handles player's /kr commands
@@ -177,16 +192,26 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter
 				{
 					this.logError("Usage: /kr <block[,block]> [y1 y2]");
 				}
+				else if (tokens[1].equalsIgnoreCase("dist"))
+				{
+					try {
+						this.seeThrough.setDistance(Float.parseFloat(tokens[2]));
+						this.logMessage("See-through distance set to " + tokens[2] + " blocks.", true);
+					} catch (Exception e) {
+						this.logError("Second argument must be a positive number!");
+					}
+				}
 				else if (tokens[1].equalsIgnoreCase("help"))
 				{
 					String[] commands = {"on - Turn on xraying. Duh.", 
 							"off - Turn off xraying.",
 							"clear - Clear the display but keep xray on.",
-							"block[,block] - Blocks to xray for, see /kr block for more.",
+							"<block[,block]> - Blocks to xray for, see /kr block for more.",
 							"reload|update - Displays new xray area.",
 							"radius|r [radius] - Displays radius or sets new radius.",
 							"area [on|off] - Toggle/on/off the display for xray area.",
 							"lag - Look for possible lag sources.",
+							"dist <#> - The distance to see through",
 							"help - This help message. Hurrdurr."};
 					this.logMessage(this.getName() + " §8[§2v" + this.getVersion() + "§8] §acommands", false);
 					for (String command: commands)
@@ -250,4 +275,16 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter
 		displayMessage.setChatStyle((new ChatStyle()).setColor(EnumChatFormatting.RED));
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
+
+	@Override
+	public void onRenderWorld(float partialTicks) {}
+	@Override
+	public void onSetupCameraTransform(float partialTicks, int pass, long timeSlice) {}
+	@Override
+	public void onRenderSky(float partialTicks, int pass) {}
+	@Override
+	public void onRenderClouds(float partialTicks, int pass, RenderGlobal renderGlobal) {}
+	@Override
+	public void onPostRender(float partialTicks) {}
+
 }
