@@ -1,4 +1,4 @@
-package com.kyzeragon.kyzray;
+package io.github.kyzderp.kyzray;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -52,7 +52,7 @@ public class SeeThrough
     
     private static FloatBuffer makeBuffer(int length) { return ByteBuffer.allocateDirect(length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer(); }
 
-    private static FloatBuffer makeBuffer(float[] array) { return (FloatBuffer)ByteBuffer.allocateDirect(array.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(array).flip(); }
+//    private static FloatBuffer makeBuffer(float[] array) { return (FloatBuffer)ByteBuffer.allocateDirect(array.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(array).flip(); }
     
 
 }

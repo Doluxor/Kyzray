@@ -1,4 +1,4 @@
-package com.kyzeragon.kyzray;
+package io.github.kyzderp.kyzray;
 
 import java.util.LinkedList;
 
@@ -7,11 +7,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatStyle;
+import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
 
 import org.lwjgl.opengl.GL11;
+
+import com.mumfrey.liteloader.gl.GL;
 
 public class Kyzray {
 
@@ -21,8 +24,8 @@ public class Kyzray {
 	private boolean displayArea;
 	private int minX, minZ, maxX, maxZ, minY, maxY;
 
-	ChatStyle style;
-	ChatComponentText displayMessage;
+	Style style;
+	TextComponentString displayMessage;
 
 	public Kyzray()
 	{
@@ -30,7 +33,7 @@ public class Kyzray {
 		this.radius = 32;
 		this.displayArea = false;
 
-		this.style = new ChatStyle();
+		this.style = new Style();
 	}
 
 	/**
@@ -63,36 +66,36 @@ public class Kyzray {
 		if (this.blocksToFind.size() == 0)
 			return;
 		Tessellator tess = Tessellator.getInstance();
+		VertexBuffer vbuf = tess.getBuffer();
 		GL11.glLineWidth(5.0f);
-		tess.getWorldRenderer().startDrawing(GL11.GL_LINE_LOOP);
-		tess.getWorldRenderer().setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.minZ);
-		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.minZ);
-		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.maxZ);
-		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.maxZ);
+		GL.glColor4f(1F, 0F, 0F, 0.5F);
+		
+		vbuf.begin(GL11.GL_LINE_LOOP, GL.VF_POSITION);
+		vbuf.pos(this.minX, this.minY, this.minZ);
+		vbuf.pos(this.maxX, this.minY, this.minZ);
+		vbuf.pos(this.maxX, this.minY, this.maxZ);
+		vbuf.pos(this.minX, this.minY, this.maxZ);
 		tess.draw();
 
-		tess.getWorldRenderer().startDrawing(GL11.GL_LINE_LOOP);
-		tess.getWorldRenderer().setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.minZ);
-		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.minZ);
-		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.maxZ);
-		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.maxZ);
+		vbuf.begin(GL11.GL_LINE_LOOP, GL.VF_POSITION);
+		vbuf.pos(this.minX, this.maxY, this.minZ);
+		vbuf.pos(this.maxX, this.maxY, this.minZ);
+		vbuf.pos(this.maxX, this.maxY, this.maxZ);
+		vbuf.pos(this.minX, this.maxY, this.maxZ);
 		tess.draw();
 
-		tess.getWorldRenderer().startDrawing(GL11.GL_LINES);
-		tess.getWorldRenderer().setColorRGBA_F(1.0F, 0.0F, 0.0F, 0.3F);
-		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.minZ);
-		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.minZ);
+		vbuf.begin(GL.GL_LINE, GL.VF_POSITION);
+		vbuf.pos(this.minX, this.minY, this.minZ);
+		vbuf.pos(this.minX, this.maxY, this.minZ);
 
-		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.minZ);
-		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.minZ);
+		vbuf.pos(this.maxX, this.minY, this.minZ);
+		vbuf.pos(this.maxX, this.maxY, this.minZ);
 
-		tess.getWorldRenderer().addVertex(this.maxX, this.minY, this.maxZ);
-		tess.getWorldRenderer().addVertex(this.maxX, this.maxY, this.maxZ);
+		vbuf.pos(this.maxX, this.minY, this.maxZ);
+		vbuf.pos(this.maxX, this.maxY, this.maxZ);
 
-		tess.getWorldRenderer().addVertex(this.minX, this.minY, this.maxZ);
-		tess.getWorldRenderer().addVertex(this.minX, this.maxY, this.maxZ);
+		vbuf.pos(this.minX, this.minY, this.maxZ);
+		vbuf.pos(this.minX, this.maxY, this.maxZ);
 		tess.draw();
 	}
 
@@ -260,6 +263,7 @@ public class Kyzray {
 	 * Finds the list of blocks in the radius
 	 * @return The list of blocks
 	 */
+	@SuppressWarnings("deprecation")
 	private LinkedList<XrayBlock> getBlockList()
 	{
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
@@ -286,8 +290,8 @@ public class Kyzray {
 						if (currentBlock.equals(this.blocksToFind.get(i)))
 							//						if (currentBlock.getLocalizedName().equals(this.blocksToFind.get(i).getLocalizedName()))
 						{
-							toReturn.add(new XrayBlock(x, y, z, 
-									currentBlock.getMapColor(currentBlock.getDefaultState()).colorValue, false));
+							int color = currentBlock.getMapColor(currentBlock.getDefaultState()).colorValue;
+							toReturn.add(new XrayBlock(x, y, z, color, false));
 							blockCounts[i]++;
 						}
 					}
@@ -337,11 +341,11 @@ public class Kyzray {
 				}
 			}
 			else if (findBlock.matches("[0-9]+")
-					&& Block.blockRegistry.getObjectById(Integer.parseInt(findBlock)) != null)
+					&& Block.REGISTRY.getObjectById(Integer.parseInt(findBlock)) != null)
 			{
-				if (!this.blocksToFind.contains((Block)Block.blockRegistry.getObjectById(Integer.parseInt(findBlock))))
+				if (!this.blocksToFind.contains((Block)Block.REGISTRY.getObjectById(Integer.parseInt(findBlock))))
 				{
-					this.blocksToFind.add((Block)Block.blockRegistry.getObjectById(Integer.parseInt(findBlock)));
+					this.blocksToFind.add((Block)Block.REGISTRY.getObjectById(Integer.parseInt(findBlock)));
 					toReturn += " " + this.blocksToFind.getLast().getLocalizedName();
 				}
 			}

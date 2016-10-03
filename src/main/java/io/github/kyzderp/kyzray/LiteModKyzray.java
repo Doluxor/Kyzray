@@ -1,4 +1,4 @@
-package com.kyzeragon.kyzray;
+package io.github.kyzderp.kyzray;
 
 import java.io.File;
 
@@ -6,15 +6,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.event.ClickEvent;
-import net.minecraft.event.ClickEvent.Action;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatStyle;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -35,7 +31,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	public String getName() { return "Kyzray"; }
 
 	@Override
-	public String getVersion() { return "1.3.0"; }
+	public String getVersion() { return "1.4.0"; }
 
 	@Override
 	public void init(File configPath) 
@@ -43,8 +39,8 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 		this.xrayOn = false;
 		this.kyzray = new Kyzray();
 		this.seeThrough = new SeeThrough();
-		this.seeThroughBinding = new KeyBinding("key.kyzray.seethrough", Keyboard.CHAR_NONE, "key.categories.litemods");
-		LiteLoader.getInput().registerKeyBinding(this.seeThroughBinding);
+		LiteModKyzray.seeThroughBinding = new KeyBinding("key.kyzray.seethrough", Keyboard.CHAR_NONE, "key.categories.litemods");
+		LiteLoader.getInput().registerKeyBinding(LiteModKyzray.seeThroughBinding);
 	}
 
 	@Override
@@ -82,7 +78,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 				-(player.prevPosY + (player.posY - player.prevPosY) * partialTicks),
 				-(player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks));
 
-		Tessellator tess = Tessellator.getInstance();
 		this.kyzray.drawXray();
 		if (this.kyzray.getAreaDisplay())
 			this.kyzray.drawArea();
@@ -106,7 +101,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	public void onRenderTerrain(float partialTicks, int pass) 
 	{
 		if (Minecraft.getMinecraft().currentScreen == null 
-				&& Keyboard.isKeyDown(this.seeThroughBinding.getKeyCode()))
+				&& Keyboard.isKeyDown(LiteModKyzray.seeThroughBinding.getKeyCode()))
 		{
 			this.seeThrough.setObliqueNearPlaneClip(0.0f, 0.0f, -1.0f);
 		}
@@ -130,33 +125,33 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 				if (tokens[1].equalsIgnoreCase("on"))
 				{
 					this.xrayOn = true;
-					this.logMessage("Xray: ON", true);
+					LiteModKyzray.logMessage("Xray: ON", true);
 				}
 				else if (tokens[1].equalsIgnoreCase("off"))
 				{
 					this.xrayOn = false;
-					this.logMessage("Xray: OFF", true);
+					LiteModKyzray.logMessage("Xray: OFF", true);
 				}
 				else if (tokens[1].equalsIgnoreCase("clear"))
 				{
 					this.kyzray.setToFind(null);
 					this.kyzray.clearBlockList();
 					this.kyzray.reload(false);
-					this.logMessage("Xray display cleared", true);
+					LiteModKyzray.logMessage("Xray display cleared", true);
 				}
 				else if (tokens[1].equalsIgnoreCase("reload") || tokens[1].equalsIgnoreCase("update"))
 				{
-					this.logMessage("Reloading Kyzray...", true);
+					LiteModKyzray.logMessage("Reloading Kyzray...", true);
 					this.kyzray.reload(false);
 				}
 				else if (tokens[1].equalsIgnoreCase("radius") || tokens[1].equalsIgnoreCase("r")) // set radius
 				{
 					if (tokens.length == 2)
-						this.logMessage("Xray radius is currently " + this.kyzray.getRadius(), true);
+						LiteModKyzray.logMessage("Xray radius is currently " + this.kyzray.getRadius(), true);
 					else
 					{
 						if (!tokens[2].matches("[0-9]+"))
-							this.logError("\"" + tokens[2] + "\" is not a valid integer!");
+							LiteModKyzray.logError("\"" + tokens[2] + "\" is not a valid integer!");
 						else
 							this.kyzray.setRadius(Integer.parseInt(tokens[2]));
 					}
@@ -166,22 +161,22 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 					if (tokens.length == 2)
 					{
 						this.kyzray.setAreaDisplay(!this.kyzray.getAreaDisplay());
-						this.logMessage("Area display toggled: " + this.kyzray.getAreaDisplay(), true);
+						LiteModKyzray.logMessage("Area display toggled: " + this.kyzray.getAreaDisplay(), true);
 					}
 					else
 					{
 						if (tokens[2].equalsIgnoreCase("on"))
 						{
 							this.kyzray.setAreaDisplay(true);
-							this.logMessage("Area display: ON", true);
+							LiteModKyzray.logMessage("Area display: ON", true);
 						}
 						else if (tokens[2].equalsIgnoreCase("off"))
 						{
 							this.kyzray.setAreaDisplay(false);
-							this.logMessage("Area display: OFF", true);
+							LiteModKyzray.logMessage("Area display: OFF", true);
 						}
 						else
-							this.logError("Usage: /kr area [on|off]");
+							LiteModKyzray.logError("Usage: /kr area [on|off]");
 					}
 				}
 				else if (tokens[1].equalsIgnoreCase("lag"))
@@ -190,15 +185,15 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 				}
 				else if (tokens[1].equalsIgnoreCase("block"))
 				{
-					this.logError("Usage: /kr <block[,block]> [y1 y2]");
+					LiteModKyzray.logError("Usage: /kr <block[,block]> [y1 y2]");
 				}
 				else if (tokens[1].equalsIgnoreCase("dist"))
 				{
 					try {
 						this.seeThrough.setDistance(Float.parseFloat(tokens[2]));
-						this.logMessage("See-through distance set to " + tokens[2] + " blocks.", true);
+						LiteModKyzray.logMessage("See-through distance set to " + tokens[2] + " blocks.", true);
 					} catch (Exception e) {
-						this.logError("Second argument must be a positive number!");
+						LiteModKyzray.logError("Second argument must be a positive number!");
 					}
 				}
 				else if (tokens[1].equalsIgnoreCase("help"))
@@ -213,20 +208,14 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 							"lag - Look for possible lag sources.",
 							"dist <#> - The distance to see through",
 							"help - This help message. Hurrdurr."};
-					this.logMessage(this.getName() + " §8[§2v" + this.getVersion() + "§8] §acommands", false);
+					LiteModKyzray.logMessage(this.getName() + " \u00A78[\u00A72v" + this.getVersion() + "\u00A78] \u00A7acommands", false);
 					for (String command: commands)
-						this.logMessage("/kr " + command, false);
-					IChatComponent link = new ChatComponentText("Click here for the wiki!");
-					ChatStyle linkStyle = new ChatStyle();
-					linkStyle.setColor(EnumChatFormatting.DARK_GREEN);
-					linkStyle.setChatClickEvent(new ClickEvent(Action.OPEN_URL, "https://github.com/Kyzderp/Kyzray/wiki"));
-					link.setChatStyle(linkStyle);
-					Minecraft.getMinecraft().thePlayer.addChatComponentMessage(link);
+						LiteModKyzray.logMessage("/kr " + command, false);
 				}
 				else // set the block to xray for
 				{
 					String result = this.kyzray.setToFind(tokens[1]);
-					this.logMessage(result, true);
+					LiteModKyzray.logMessage(result, true);
 					if (result.matches("Now xraying for.*"))
 					{
 						if (tokens.length == 4)
@@ -234,7 +223,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 							if (tokens[2].matches("-?[0-9]*") && tokens[3].matches("-?[0-9]*"))
 								this.kyzray.reload(Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]), false);
 							else
-								this.logError("Invalid integer. Usage: /kr <block(s)> [y1] [y2]");
+								LiteModKyzray.logError("Invalid integer. Usage: /kr <block(s)> [y1] [y2]");
 						}
 						else
 							this.kyzray.reload(false);
@@ -243,8 +232,8 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 			}
 			else // display version and help command
 			{
-				this.logMessage("Kyzray §8[§2v" + this.getVersion() + "§8] §aby Kyzeragon", false);
-				this.logMessage("Type §2/kr help §afor commands", false);
+				LiteModKyzray.logMessage("Kyzray \u00A78[\u00A72v" + this.getVersion() + "\u00A78] \u00A7aby Kyzeragon", false);
+				LiteModKyzray.logMessage("Type \u00A72/kr help \u00A7afor commands", false);
 			}
 			return false;
 		}
@@ -257,11 +246,11 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	 * @param addPrefix Whether to add the mod-specific prefix or not
 	 */
 	public static void logMessage(String message, boolean addPrefix)
-	{// "§8[§2Kyzray§8] §a"
+	{// "\u00A78[\u00A72Kyzray\u00A78] \u00A7a"
 		if (addPrefix)
-			message = "§8[§2Kyzray§8] §a" + message;
-		ChatComponentText displayMessage = new ChatComponentText(message);
-		displayMessage.setChatStyle((new ChatStyle()).setColor(EnumChatFormatting.GREEN));
+			message = "\u00A78[\u00A72Kyzray\u00A78] \u00A7a" + message;
+		TextComponentString displayMessage = new TextComponentString(message);
+		displayMessage.setStyle((new Style()).setColor(TextFormatting.GREEN));
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
 
@@ -271,8 +260,8 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	 */
 	public static void logError(String message)
 	{
-		ChatComponentText displayMessage = new ChatComponentText("§8[§4!§8] §c" + message + " §8[§4!§8]");
-		displayMessage.setChatStyle((new ChatStyle()).setColor(EnumChatFormatting.RED));
+		TextComponentString displayMessage = new TextComponentString("\u00A78[\u00A74!\u00A78] \u00A7c" + message + " \u00A78[\u00A74!\u00A78]");
+		displayMessage.setStyle((new Style()).setColor(TextFormatting.RED));
 		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
 	}
 

@@ -1,7 +1,0 @@
-{
-    "name": "${ant.project.name}",
-    "mcversion": "${litemodversion}",
-    "revision": "${build.number}",
-    "author": "${author}",
-    "description": "An xray/block finder mod controlled by chat commands."
-}
