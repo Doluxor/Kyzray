@@ -1,7 +1,7 @@
 package io.github.kyzderp.kyzray;
 
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 
 import com.mumfrey.liteloader.gl.GL;
 
@@ -43,7 +43,7 @@ public class XrayBlock {
 		GL.glLineWidth(3.0F);
 		GL.glColor4f(this.colorR, this.colorG, this.colorB, this.colorA);
 		
-		VertexBuffer vbuf = tess.getBuffer();
+		BufferBuilder vbuf = tess.getBuffer();
 		
 		vbuf.begin(GL.GL_LINE_LOOP, GL.VF_POSITION);
 		vbuf.pos(minX, minY, minZ).endVertex();

@@ -6,8 +6,8 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
@@ -66,7 +66,7 @@ public class Kyzray {
 		if (this.blocksToFind.size() == 0)
 			return;
 		Tessellator tess = Tessellator.getInstance();
-		VertexBuffer vbuf = tess.getBuffer();
+		BufferBuilder vbuf = tess.getBuffer();
 		GL11.glLineWidth(5.0f);
 		GL.glColor4f(1F, 0F, 0F, 0.5F);
 		
@@ -103,7 +103,7 @@ public class Kyzray {
 	{
 		LiteModKyzray.logMessage("Looking for 'L' shaped water... this may take a while.", true);
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
-		WorldClient world = Minecraft.getMinecraft().theWorld;
+		WorldClient world = Minecraft.getMinecraft().world;
 		Block water = Block.getBlockFromName("water");
 		int blue = 0x0000FF;
 		int red = 0xAA0000;
@@ -252,9 +252,9 @@ public class Kyzray {
 			}
 		}
 		LiteModKyzray.logMessage("Found in " + this.radius + " block radius from Y=" + this.minY + " to Y=" + this.maxY + ":", true); 
-		LiteModKyzray.logMessage("      §8- §4" + numLag + " §apossible connected L water", false);
-		LiteModKyzray.logMessage("      §8- §6" + dLag + " §apossible lower-level unconnected L water", false);
-		LiteModKyzray.logMessage("      §8- §e" + idkLag + " §apossible same-level unconnected L water", false);
+		LiteModKyzray.logMessage("      \u00A78- \u00A74" + numLag + " \u00A7apossible connected L water", false);
+		LiteModKyzray.logMessage("      \u00A78- \u00A76" + dLag + " \u00A7apossible lower-level unconnected L water", false);
+		LiteModKyzray.logMessage("      \u00A78- \u00A7e" + idkLag + " \u00A7apossible same-level unconnected L water", false);
 		return toReturn;
 	}
 
@@ -267,7 +267,7 @@ public class Kyzray {
 	private LinkedList<XrayBlock> getBlockList()
 	{
 		LinkedList<XrayBlock> toReturn = new LinkedList<XrayBlock>();
-		WorldClient world = Minecraft.getMinecraft().theWorld;
+		WorldClient world = Minecraft.getMinecraft().world;
 
 		int[] blockCounts = new int[this.blocksToFind.size()];
 		for (int i = 0; i < this.blocksToFind.size(); i++)
@@ -286,11 +286,12 @@ public class Kyzray {
 				{
 					for (int i = 0; i < this.blocksToFind.size(); i++)
 					{
-						Block currentBlock = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+						BlockPos pos = new BlockPos(x, y, z);
+						Block currentBlock = world.getBlockState(pos).getBlock();
 						if (currentBlock.equals(this.blocksToFind.get(i)))
 							//						if (currentBlock.getLocalizedName().equals(this.blocksToFind.get(i).getLocalizedName()))
 						{
-							int color = currentBlock.getMapColor(currentBlock.getDefaultState()).colorValue;
+							int color = currentBlock.getMapColor(currentBlock.getDefaultState(), world, pos).colorValue;
 							toReturn.add(new XrayBlock(x, y, z, color, false));
 							blockCounts[i]++;
 						}
@@ -380,7 +381,7 @@ public class Kyzray {
 	{
 		if (this.blocksToFind.size() < 1 && !lag)
 			return;
-		EntityPlayerSP player = Minecraft.getMinecraft().thePlayer;
+		EntityPlayerSP player = Minecraft.getMinecraft().player;
 		this.reload((int)(player.posX - this.radius), (int)(player.posX + this.radius),
 				y1, y2, (int)(player.posZ - this.radius), (int)(player.posZ + this.radius), lag);
 	}

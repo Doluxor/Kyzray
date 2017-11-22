@@ -27,13 +27,10 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	private SeeThrough seeThrough;
 	private static KeyBinding seeThroughBinding;
 
-	@Override
 	public String getName() { return "Kyzray"; }
 
-	@Override
-	public String getVersion() { return "1.4.0"; }
+	public String getVersion() { return "1.5.0"; }
 
-	@Override
 	public void init(File configPath) 
 	{
 		this.xrayOn = false;
@@ -43,14 +40,12 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 		LiteLoader.getInput().registerKeyBinding(LiteModKyzray.seeThroughBinding);
 	}
 
-	@Override
 	public void upgradeSettings(String version, File configPath,
 			File oldConfigPath) {}
 
 	/**
 	 * Draw the xrayed blocks.
 	 */
-	@Override
 	public void onPostRenderEntities(float partialTicks) 
 	{
 		
@@ -73,7 +68,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 
 		GL11.glPushMatrix();
 
-		EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+		EntityPlayer player = Minecraft.getMinecraft().player;
 		GL11.glTranslated(-(player.prevPosX + (player.posX - player.prevPosX) * partialTicks),
 				-(player.prevPosY + (player.posY - player.prevPosY) * partialTicks),
 				-(player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks));
@@ -97,7 +92,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 		RenderHelper.enableStandardItemLighting();
 	}
 
-	@Override
 	public void onRenderTerrain(float partialTicks, int pass) 
 	{
 		if (Minecraft.getMinecraft().currentScreen == null 
@@ -112,7 +106,6 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	/**
 	 * Handles player's /kr commands
 	 */
-	@Override
 	public boolean onSendChatMessage(String message) 
 	{
 		// TODO: /kr sign -> search words?
@@ -251,7 +244,7 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 			message = "\u00A78[\u00A72Kyzray\u00A78] \u00A7a" + message;
 		TextComponentString displayMessage = new TextComponentString(message);
 		displayMessage.setStyle((new Style()).setColor(TextFormatting.GREEN));
-		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
+		Minecraft.getMinecraft().player.sendMessage(displayMessage);
 	}
 
 	/**
@@ -262,18 +255,13 @@ public class LiteModKyzray implements PostRenderListener, OutboundChatFilter, Pr
 	{
 		TextComponentString displayMessage = new TextComponentString("\u00A78[\u00A74!\u00A78] \u00A7c" + message + " \u00A78[\u00A74!\u00A78]");
 		displayMessage.setStyle((new Style()).setColor(TextFormatting.RED));
-		Minecraft.getMinecraft().thePlayer.addChatComponentMessage(displayMessage);
+		Minecraft.getMinecraft().player.sendMessage(displayMessage);
 	}
 
-	@Override
 	public void onRenderWorld(float partialTicks) {}
-	@Override
 	public void onSetupCameraTransform(float partialTicks, int pass, long timeSlice) {}
-	@Override
 	public void onRenderSky(float partialTicks, int pass) {}
-	@Override
 	public void onRenderClouds(float partialTicks, int pass, RenderGlobal renderGlobal) {}
-	@Override
 	public void onPostRender(float partialTicks) {}
 
 }
